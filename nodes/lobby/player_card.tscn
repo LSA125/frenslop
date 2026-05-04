@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://bufebfuh3f6x4"]
+
+[ext_resource type="Script" uid="uid://b13i4tdjy874b" path="res://scripts/lobby/PlayerCard.cs" id="1_rgjpq"]
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_s5ly1"]
+properties/0/path = NodePath("InfoContainer/Name:text")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath("InfoContainer/Id:text")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("InfoContainer/Ready:text")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+
+[node name="PlayerCard" type="PanelContainer" unique_id=1901790200 node_paths=PackedStringArray("_nameLabel", "_idLabel", "_readylabel")]
+size_flags_horizontal = 3
+script = ExtResource("1_rgjpq")
+_nameLabel = NodePath("InfoContainer/Name")
+_idLabel = NodePath("InfoContainer/Id")
+_readylabel = NodePath("InfoContainer/Ready")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1341515791]
+replication_interval = 0.5
+delta_interval = 0.5
+replication_config = SubResource("SceneReplicationConfig_s5ly1")
+
+[node name="InfoContainer" type="VBoxContainer" parent="." unique_id=820328754]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="Name" type="Label" parent="InfoContainer" unique_id=1047768125]
+layout_mode = 2
+text = "Name"
+
+[node name="Id" type="Label" parent="InfoContainer" unique_id=272890983]
+layout_mode = 2
+text = "ID"
+
+[node name="Ready" type="Label" parent="InfoContainer" unique_id=986320623]
+layout_mode = 2
+text = "Ready
+"

@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://dsaqmwi46icji"]
+
+[ext_resource type="Script" uid="uid://c0ip3tvjb2rjw" path="res://multiplayer_manager.gd" id="1_06t4h"]
+[ext_resource type="Script" uid="uid://cuaccgjoko348" path="res://main_scene.gd" id="1_fu7sn"]
+[ext_resource type="PackedScene" uid="uid://c342jcj40vecj" path="res://scenes/player.tscn" id="3_jix8l"]
+[ext_resource type="Texture2D" uid="uid://c4qr7bspxv7kh" path="res://icon.svg" id="4_jix8l"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_glbon"]
+size = Vector2(1147, 25)
+
+[node name="MainScene" type="Node2D" unique_id=374712798]
+script = ExtResource("1_fu7sn")
+
+[node name="MultiplayerManager" type="Node" parent="." unique_id=343584203]
+script = ExtResource("1_06t4h")
+
+[node name="Player" parent="." unique_id=237445849 instance=ExtResource("3_jix8l")]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1559312695]
+_spawnable_scenes = PackedStringArray("uid://c342jcj40vecj")
+spawn_path = NodePath("../Players")
+spawn_limit = 10
+
+[node name="Players" type="Node2D" parent="." unique_id=1052005751]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=253679212]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=1537781898]
+position = Vector2(577.5, 629.5)
+shape = SubResource("RectangleShape2D_glbon")
+
+[node name="Sprite2D" type="Sprite2D" parent="StaticBody2D" unique_id=1028768984]
+position = Vector2(571.74994, 629.99994)
+scale = Vector2(8.92578, 0.234375)
+texture = ExtResource("4_jix8l")

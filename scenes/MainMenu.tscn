@@ -1,0 +1,79 @@
+[gd_scene format=3 uid="uid://dp7hofscn4rvi"]
+
+[ext_resource type="Script" uid="uid://bmfc6pyxurm0h" path="res://scripts/lobby/PlayersList.cs" id="1_0ykhv"]
+[ext_resource type="Script" uid="uid://cqmik2mw22sun" path="res://scripts/lobby/MultiplayerConnector.cs" id="1_yqorp"]
+[ext_resource type="PackedScene" uid="uid://bufebfuh3f6x4" path="res://nodes/lobby/player_card.tscn" id="2_2wh52"]
+
+[node name="MainMenu" type="Control" unique_id=1055659663]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="." unique_id=543872485]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Players" type="HBoxContainer" parent="Panel" unique_id=2138742947 node_paths=PackedStringArray("_readyButton")]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 40.0
+grow_horizontal = 2
+script = ExtResource("1_0ykhv")
+_playerCardScene = ExtResource("2_2wh52")
+_readyButton = NodePath("../Buttons/ReadyButton")
+
+[node name="Buttons" type="VBoxContainer" parent="Panel" unique_id=1523492110]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -145.0
+offset_top = -145.0
+offset_right = 138.0
+offset_bottom = 135.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="HostButton" type="Button" parent="Panel/Buttons" unique_id=827516039]
+layout_mode = 2
+text = "Host Game"
+
+[node name="JoinButton" type="Button" parent="Panel/Buttons" unique_id=793076267]
+layout_mode = 2
+text = "Join Game"
+
+[node name="NameEntry" type="LineEdit" parent="Panel/Buttons" unique_id=1680158202]
+layout_mode = 2
+placeholder_text = "Name"
+alignment = 1
+
+[node name="ReadyButton" type="Button" parent="Panel/Buttons" unique_id=2122339766]
+layout_mode = 2
+text = "Ready"
+
+[node name="StartButton" type="Button" parent="Panel/Buttons" unique_id=1185832175]
+layout_mode = 2
+text = "Start Game"
+
+[node name="MultiplayerConnector" type="Node" parent="." unique_id=807723280 node_paths=PackedStringArray("_nameInput", "_hostButton", "_joinButton", "_startButton", "_playerCardContainer")]
+script = ExtResource("1_yqorp")
+_nameInput = NodePath("../Panel/Buttons/NameEntry")
+_hostButton = NodePath("../Panel/Buttons/HostButton")
+_joinButton = NodePath("../Panel/Buttons/JoinButton")
+_startButton = NodePath("../Panel/Buttons/StartButton")
+_playerCard = ExtResource("2_2wh52")
+_playerCardContainer = NodePath("../Panel/Players")
