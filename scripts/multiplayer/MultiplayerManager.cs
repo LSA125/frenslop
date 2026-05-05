@@ -53,7 +53,6 @@ public partial class MultiplayerManager : Node
         _peer.Host.Compress(ENetConnection.CompressionMode.RangeCoder);
         Multiplayer.MultiplayerPeer = _peer;
         
-        // Host is always ID 1
         LocalPlayer = new PlayerInfo(1, playerName);
         Players[1] = LocalPlayer;
         
@@ -106,9 +105,10 @@ public partial class MultiplayerManager : Node
 
     private void OnServerDisconnected()
     {
-        Players.Clear();
         Multiplayer.MultiplayerPeer = null;
+        Players.Clear();
         GetTree().ChangeSceneToFile("res://scenes/MainMenu.tscn");
+        
     }
 
     private void OnPeerConnected(long id) => GD.Print($"Peer {id} connecting...");

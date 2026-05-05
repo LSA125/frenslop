@@ -8,63 +8,49 @@ public partial class PlayersList : HBoxContainer
 	// Called when the node enters the scene tree for the first time.
 	[Export] private PackedScene _playerCardScene;
 	[Export] private Button _readyButton;
-	private Dictionary<long, PlayerCard> _playerCards = new Dictionary<long, PlayerCard>();
-	private PlayerCard _localPlayerCard;
-	private string TextToggle(string current)
-	{
-		return current == "Ready" ? "Not Ready" : "Ready";
-	}
+	[Export] private Button _startButton;
 	public override void _Ready()
 	{
-		_readyButton.Pressed += _on_ready_button_pressed;
-		MultiplayerManager.Instance.PlayerListChanged += OnPlayerListChanged;
-		
-		// Add existing players from the manager's dictionary
-		foreach (var player in MultiplayerManager.Instance.Players.Values)
-		{
-			AddPlayerCard(player);
-		}
+		_readyButton.Pressed += OnReadyButtonPressed;
+		ChildExitingTree += OnChildExitedTree;
 	}
-
 	private void AddPlayerCard(PlayerInfo player)
 	{
-		// Check if card already exists to avoid duplicates
-		if (_playerCards.ContainsKey(player.Id))
+		//check if card already exists
+		foreach(PlayerCard child in GetChildren())
 		{
-			//update
-			_playerCards[player.Id].Setup(player.Name, player.Id, _playerCards[player.Id].IsReady);
-			return;
+			if(child.Name == player.Id.ToString())
+			{
+				child.Setup(player.Name, player.Id, false);
+				return;
+			}
 		}
-
 		PlayerCard card = _playerCardScene.Instantiate<PlayerCard>();
 		card.Name = player.Id.ToString();
 		card.SetMultiplayerAuthority((int)player.Id);
-		this.AddChild(card);
+		card.ReadyStatusChanged += OnReadyChanged;
+		AddChild(card);
 		card.Setup(player.Name, player.Id, false);
-		_playerCards[player.Id] = card;
-		
-		if (player.Id == MultiplayerManager.Instance.LocalPlayer.Id)
-		{
-			_localPlayerCard = card;
-		}
 	}
-
-	private void RemovePlayerCard(long playerId)
-	{
-		if (_playerCards.TryGetValue(playerId, out PlayerCard card))
-		{
-			 _playerCards.Remove(playerId);
-			card.QueueFree();
-		}
-	}
-
-	private void _on_ready_button_pressed()
+	private void OnReadyButtonPressed()
 	{
 		// Example: Toggle ready state for local player
-		if (_localPlayerCard != null)
+		PlayerCard playerCard = GetNode<PlayerCard>(MultiplayerManager.Instance.LocalPlayer.Id.ToString());
+		if (playerCard != null)
 		{
-			bool isReady = _localPlayerCard.IsReady;
-			_localPlayerCard.UpdateReadyState(!isReady);
+			bool isReady = playerCard.IsReady;
+			playerCard.UpdateReadyState(!isReady);
+			if(Multiplayer.IsServer())
+			{
+				if (AllReady())
+				{
+;					_startButton.Disabled = false;
+				}
+				else
+				{
+					_startButton.Disabled = true;
+				}
+			}
 		}
 		else
 		{
@@ -72,30 +58,50 @@ public partial class PlayersList : HBoxContainer
 			return;
 		}
 	}
-
-	private void OnPlayerListChanged()
+	public void OnPlayerListChanged()
 	{
-		// Get current player IDs from the manager
-		var managerPlayerIds = MultiplayerManager.Instance.Players.Keys.ToHashSet();
-		var currentCardIds = _playerCards.Keys.ToHashSet();
-
-		// Remove cards for players that are no longer in the list
-		foreach (var id in currentCardIds.Except(managerPlayerIds))
-		{
-			RemovePlayerCard(id);
-		}
-
-		// Add cards for new players
+		// Sync player cards with the current player list
+		var currentIds = GetChildren().OfType<PlayerCard>().Select(c => c.Name).ToHashSet();
+		var managerIds = MultiplayerManager.Instance.Players.Keys.Select(id => id.ToString()).ToHashSet();
+		// Add new players
 		foreach (var player in MultiplayerManager.Instance.Players.Values)
 		{
-			if (!currentCardIds.Contains(player.Id))
+			if (!currentIds.Contains(player.Id.ToString()))
 			{
 				AddPlayerCard(player);
 			}
 		}
+		// Remove disconnected players
+		foreach (var card in GetChildren().OfType<PlayerCard>())
+		{
+			if (!managerIds.Contains(card.Name))
+			{
+				card.QueueFree();
+			}
+		}
+	}
+	private void OnReadyChanged()
+	{
+		if(Multiplayer.MultiplayerPeer != null && Multiplayer.IsServer()) {_startButton.Disabled = !AllReady();}
 	}
 	private bool AllReady()
 	{
-		return _playerCards.Values.All(card => card.IsReady);
+		return GetChildren().OfType<PlayerCard>().All(card => card.IsReady);
 	}
+
+	#region Destructors and Signal disconnectors
+	private void OnChildExitedTree(Node node)
+	{
+		if (node is PlayerCard card)
+		{
+			card.ReadyStatusChanged -= OnReadyChanged;
+			OnReadyChanged(); 
+		}
+	}
+    public override void _ExitTree()
+    {
+		MultiplayerManager.Instance.PlayerListChanged -= OnPlayerListChanged;
+        base._ExitTree();
+    }
+	#endregion
 }

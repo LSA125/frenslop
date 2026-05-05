@@ -20,7 +20,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Players" type="HBoxContainer" parent="Panel" unique_id=2138742947 node_paths=PackedStringArray("_readyButton")]
+[node name="Players" type="HBoxContainer" parent="Panel" unique_id=2138742947 node_paths=PackedStringArray("_readyButton", "_startButton")]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -32,6 +32,7 @@ grow_horizontal = 2
 script = ExtResource("1_0ykhv")
 _playerCardScene = ExtResource("2_2wh52")
 _readyButton = NodePath("../Buttons/ReadyButton")
+_startButton = NodePath("../Buttons/StartButton")
 
 [node name="Buttons" type="VBoxContainer" parent="Panel" unique_id=1523492110]
 layout_mode = 1
@@ -69,11 +70,15 @@ text = "Ready"
 layout_mode = 2
 text = "Start Game"
 
-[node name="MultiplayerConnector" type="Node" parent="." unique_id=807723280 node_paths=PackedStringArray("_nameInput", "_hostButton", "_joinButton", "_startButton", "_playerCardContainer")]
+[node name="MultiplayerConnector" type="Node" parent="." unique_id=807723280 node_paths=PackedStringArray("_nameInput", "_hostButton", "_joinButton", "_startButton", "_playersList")]
 script = ExtResource("1_yqorp")
 _nameInput = NodePath("../Panel/Buttons/NameEntry")
 _hostButton = NodePath("../Panel/Buttons/HostButton")
 _joinButton = NodePath("../Panel/Buttons/JoinButton")
 _startButton = NodePath("../Panel/Buttons/StartButton")
-_playerCard = ExtResource("2_2wh52")
-_playerCardContainer = NodePath("../Panel/Players")
+_playersList = NodePath("../Panel/Players")
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1161862406]
+_spawnable_scenes = PackedStringArray("uid://bufebfuh3f6x4")
+spawn_path = NodePath("../Panel/Players")
+spawn_limit = 10

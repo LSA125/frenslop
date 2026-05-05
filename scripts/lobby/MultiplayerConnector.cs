@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.ComponentModel.DataAnnotations;
 
 public partial class MultiplayerConnector : Node
 {
@@ -7,9 +8,12 @@ public partial class MultiplayerConnector : Node
 	[Export] private Button _hostButton;
 	[Export] private Button _joinButton;
 	[Export] private Button _startButton;
+	[Export] private PlayersList _playersList;
 	
 	public override void _Ready()
 	{
+		_startButton.Disabled = true; // Only enable for host
+		_startButton.Visible = false; // Hide start button for clients
 		_hostButton.Pressed += _on_host_button_pressed;
 		_joinButton.Pressed += _on_join_button_pressed;
 		_startButton.Pressed += _on_start_button_pressed;
@@ -21,13 +25,13 @@ public partial class MultiplayerConnector : Node
 	{
 		GD.Print("Hosting game...");
 		MultiplayerManager.Instance.HostGame(_nameInput.Text);
-
+		_startButton.Visible = true;
+		MultiplayerManager.Instance.PlayerListChanged += _playersList.OnPlayerListChanged;
 	}
 	public void _on_join_button_pressed()
 	{
 		GD.Print("Joining game...");
 		MultiplayerManager.Instance.JoinGame("", _nameInput.Text);
-		
 	}
 	public void _on_start_button_pressed()
 	{
