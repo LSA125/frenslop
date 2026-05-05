@@ -5,13 +5,13 @@
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_s5ly1"]
 properties/0/path = NodePath("InfoContainer/Name:text")
 properties/0/spawn = true
-properties/0/replication_mode = 2
+properties/0/replication_mode = 1
 properties/1/path = NodePath("InfoContainer/Id:text")
 properties/1/spawn = true
-properties/1/replication_mode = 2
+properties/1/replication_mode = 1
 properties/2/path = NodePath(".:IsReady")
 properties/2/spawn = true
-properties/2/replication_mode = 2
+properties/2/replication_mode = 1
 
 [node name="PlayerCard" type="PanelContainer" unique_id=1901790200 node_paths=PackedStringArray("_nameLabel", "_idLabel", "_readylabel")]
 size_flags_horizontal = 3

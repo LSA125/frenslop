@@ -27,6 +27,7 @@ public partial class MultiplayerConnector : Node
 		MultiplayerManager.Instance.HostGame(_nameInput.Text);
 		_startButton.Visible = true;
 		MultiplayerManager.Instance.PlayerListChanged += _playersList.OnPlayerListChanged;
+		_playersList.OnPlayerListChanged(); // Initial sync
 	}
 	public void _on_join_button_pressed()
 	{

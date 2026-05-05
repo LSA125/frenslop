@@ -2,13 +2,13 @@ public class PlayerInfo
 {
     public long Id { get; set; }
     public string Name { get; set; }
-    public int Score { get; set; }
+    public string IpAddress { get; set; }
 
-    public PlayerInfo(long id, string name, int score = 0)
+    public PlayerInfo(long id, string name, string IpAddress = "127")
     {
         Id = id;
         Name = name;
-        Score = score;
+        this.IpAddress = IpAddress;
     }
 
     // Native Godot Dictionaries are automatically serializable over RPC
@@ -18,7 +18,7 @@ public class PlayerInfo
         {
             { "id", Id },
             { "name", Name },
-            { "score", Score },
+            { "ipAddress", IpAddress },
         };
     }
 
@@ -27,7 +27,7 @@ public class PlayerInfo
         return new PlayerInfo(
             (long)dict["id"],
             (string)dict["name"],
-            (int)dict["score"]
+            (string)dict["ipAddress"]
         );
     }
 }

@@ -27,36 +27,31 @@ public partial class PlayersList : HBoxContainer
 		}
 		PlayerCard card = _playerCardScene.Instantiate<PlayerCard>();
 		card.Name = player.Id.ToString();
-		card.SetMultiplayerAuthority((int)player.Id);
-		card.ReadyStatusChanged += OnReadyChanged;
-		AddChild(card);
 		card.Setup(player.Name, player.Id, false);
+		AddChild(card);
+		card.ReadyStatusChanged += OnReadyChanged;
 	}
 	private void OnReadyButtonPressed()
 	{
 		// Example: Toggle ready state for local player
-		PlayerCard playerCard = GetNode<PlayerCard>(MultiplayerManager.Instance.LocalPlayer.Id.ToString());
-		if (playerCard != null)
+		if(Multiplayer.IsServer())
 		{
-			bool isReady = playerCard.IsReady;
-			playerCard.UpdateReadyState(!isReady);
-			if(Multiplayer.IsServer())
-			{
-				if (AllReady())
-				{
-;					_startButton.Disabled = false;
-				}
-				else
-				{
-					_startButton.Disabled = true;
-				}
-			}
+			var card = GetNode<PlayerCard>(MultiplayerManager.Instance.LocalPlayer.Id.ToString());
+			card.UpdateReadyState(!card.IsReady);
+			OnReadyChanged();
 		}
 		else
 		{
-			GD.PrintErr("Local player card not found!");
-			return;
+			RpcId(1, MethodName.ServerToggleReady, MultiplayerManager.Instance.LocalPlayer.Id);
 		}
+	}
+	[Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+	private void ServerToggleReady(long playerId)
+	{
+		if (!Multiplayer.IsServer()) return;
+		
+		var card = GetNode<PlayerCard>(playerId.ToString());
+		card.UpdateReadyState(!card.IsReady);
 	}
 	public void OnPlayerListChanged()
 	{

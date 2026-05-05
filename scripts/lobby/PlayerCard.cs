@@ -18,6 +18,12 @@ public partial class PlayerCard : PanelContainer
             EmitSignal(SignalName.ReadyStatusChanged);
         }
     }
+    public override void _EnterTree()
+    {
+        base._EnterTree();
+		SetMultiplayerAuthority(1);
+    }
+
 	public string Id { get; private set; }
 	public void Setup(String name, long id, bool ready)
 	{
@@ -27,9 +33,6 @@ public partial class PlayerCard : PanelContainer
 	}
 	public void UpdateReadyState(bool isReady)
 	{
-		if(IsMultiplayerAuthority())
-		{
-			IsReady = isReady;
-		}
+		IsReady = isReady;
 	}
 }

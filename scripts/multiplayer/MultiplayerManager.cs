@@ -53,10 +53,8 @@ public partial class MultiplayerManager : Node
         _peer.Host.Compress(ENetConnection.CompressionMode.RangeCoder);
         Multiplayer.MultiplayerPeer = _peer;
         
-        LocalPlayer = new PlayerInfo(1, playerName);
+        LocalPlayer = new PlayerInfo(1, playerName, _defaultAddress);
         Players[1] = LocalPlayer;
-        
-        EmitSignal(SignalName.PlayerListChanged);
         GD.Print("Server started.");
     }
 
@@ -73,7 +71,7 @@ public partial class MultiplayerManager : Node
             return;
         }
 
-        LocalPlayer = new PlayerInfo(0, playerName); // ID set on connection
+        LocalPlayer = new PlayerInfo(0, playerName, address); // ID set on connection
         Multiplayer.MultiplayerPeer = _peer;
         GD.Print("Client started, connecting...");
     }
@@ -105,10 +103,11 @@ public partial class MultiplayerManager : Node
 
     private void OnServerDisconnected()
     {
-        Multiplayer.MultiplayerPeer = null;
         Players.Clear();
-        GetTree().ChangeSceneToFile("res://scenes/MainMenu.tscn");
-        
+        LocalPlayer = null;
+        Multiplayer.MultiplayerPeer = null;
+        EmitSignal(SignalName.PlayerListChanged);
+
     }
 
     private void OnPeerConnected(long id) => GD.Print($"Peer {id} connecting...");

@@ -1,0 +1,5 @@
+Hide Host/Join buttons when in lobby
+
+Add quit buttons
+
+Begin main scene
