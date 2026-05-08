@@ -42,7 +42,7 @@ public partial class MultiplayerConnector : Node
 
 	private void OnGameStarted()
 	{
-		GetTree().ChangeSceneToFile("res://scenes/MainScene.tscn");
+		GetTree().ChangeSceneToFile("res://scenes/Game.tscn");
 		GD.Print("Successfully switched to main scene.");
 	}
 }
