@@ -21,7 +21,6 @@ properties/0/replication_mode = 1
 size = Vector2(59, 65)
 
 [node name="Player" type="CharacterBody2D" unique_id=571455046 node_paths=PackedStringArray("InputSync")]
-collision_layer = 0
 script = ExtResource("1_c6bbt")
 InputSync = NodePath("InputSynchronizer")
 

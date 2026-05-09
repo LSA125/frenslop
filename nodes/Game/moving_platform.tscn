@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://dxdilstx04hyq"]
+
+[ext_resource type="Script" uid="uid://lg4awo6rpag2" path="res://scenes/MovingPlatform.cs" id="1_qjc1e"]
+
+[sub_resource type="Gradient" id="Gradient_78awf"]
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_s0nni"]
+gradient = SubResource("Gradient_78awf")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_aug50"]
+size = Vector2(76, 20)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_kiw3p"]
+properties/0/path = NodePath(".:server_position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+
+[node name="MovingPlatform" type="AnimatableBody2D" unique_id=585119023]
+script = ExtResource("1_qjc1e")
+distance_y = -200
+distance_x = 0
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=746812819]
+position = Vector2(27.999998, -6.67572e-06)
+rotation = 1.5707964
+scale = Vector2(0.08309665, 78.18183)
+texture = SubResource("GradientTexture1D_s0nni")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=955408764]
+position = Vector2(28, 0)
+shape = SubResource("RectangleShape2D_aug50")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=116091872]
+replication_config = SubResource("SceneReplicationConfig_kiw3p")
