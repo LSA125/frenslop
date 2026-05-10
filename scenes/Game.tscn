@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://byxivut0velug"]
 
 [ext_resource type="PackedScene" uid="uid://dnekija28fofs" path="res://nodes/game/player.tscn" id="1_ibkli"]
-[ext_resource type="Script" uid="uid://bsvnbiubd8st1" path="res://scripts/game/MultiplayerSpawner.cs" id="2_qbsmt"]
+[ext_resource type="Script" uid="uid://dp1gd78pe4fwp" path="res://scripts/game/MultiplayerSpawner.gd" id="2_qbsmt"]
 [ext_resource type="PackedScene" uid="uid://dxdilstx04hyq" path="res://nodes/game/moving_platform.tscn" id="3_cpr0p"]
 
 [sub_resource type="Gradient" id="Gradient_lbhrr"]
@@ -33,8 +33,7 @@ _spawnable_scenes = PackedStringArray("uid://dnekija28fofs")
 spawn_path = NodePath("../Players")
 spawn_limit = 4
 script = ExtResource("2_qbsmt")
-_playerScene = ExtResource("1_ibkli")
+player_scene = ExtResource("1_ibkli")
 
 [node name="MovingPlatform" parent="." unique_id=585119023 instance=ExtResource("3_cpr0p")]
 position = Vector2(1072, 575)
-lerp_factor = 0.8

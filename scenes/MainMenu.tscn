@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dp7hofscn4rvi"]
 
-[ext_resource type="Script" uid="uid://bmfc6pyxurm0h" path="res://scripts/lobby/PlayersList.cs" id="1_0ykhv"]
-[ext_resource type="Script" uid="uid://cqmik2mw22sun" path="res://scripts/lobby/MultiplayerConnector.cs" id="1_yqorp"]
+[ext_resource type="Script" uid="uid://7w4acubf7oww" path="res://scripts/lobby/PlayersList.gd" id="1_0ykhv"]
+[ext_resource type="Script" uid="uid://dwbqttfm2s8vc" path="res://scripts/lobby/MultiplayerConnector.gd" id="1_yqorp"]
 [ext_resource type="PackedScene" uid="uid://bufebfuh3f6x4" path="res://nodes/lobby/player_card.tscn" id="2_2wh52"]
 
 [node name="MainMenu" type="Control" unique_id=1055659663]
@@ -20,7 +20,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Players" type="HBoxContainer" parent="Panel" unique_id=2138742947 node_paths=PackedStringArray("_readyButton", "_startButton")]
+[node name="Players" type="HBoxContainer" parent="Panel" unique_id=2138742947 node_paths=PackedStringArray("ready_button", "start_button")]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -30,9 +30,9 @@ offset_right = 20.0
 offset_bottom = 40.0
 grow_horizontal = 2
 script = ExtResource("1_0ykhv")
-_playerCardScene = ExtResource("2_2wh52")
-_readyButton = NodePath("../Buttons/ReadyButton")
-_startButton = NodePath("../Buttons/StartButton")
+player_card_scene = ExtResource("2_2wh52")
+ready_button = NodePath("../Buttons/ReadyButton")
+start_button = NodePath("../Buttons/StartButton")
 
 [node name="Buttons" type="VBoxContainer" parent="Panel" unique_id=1523492110]
 layout_mode = 1
@@ -70,13 +70,13 @@ text = "Ready"
 layout_mode = 2
 text = "Start Game"
 
-[node name="MultiplayerConnector" type="Node" parent="." unique_id=807723280 node_paths=PackedStringArray("_nameInput", "_hostButton", "_joinButton", "_startButton", "_playersList")]
+[node name="MultiplayerConnector" type="Node" parent="." unique_id=807723280 node_paths=PackedStringArray("name_input", "host_button", "join_button", "start_button", "players_list")]
 script = ExtResource("1_yqorp")
-_nameInput = NodePath("../Panel/Buttons/NameEntry")
-_hostButton = NodePath("../Panel/Buttons/HostButton")
-_joinButton = NodePath("../Panel/Buttons/JoinButton")
-_startButton = NodePath("../Panel/Buttons/StartButton")
-_playersList = NodePath("../Panel/Players")
+name_input = NodePath("../Panel/Buttons/NameEntry")
+host_button = NodePath("../Panel/Buttons/HostButton")
+join_button = NodePath("../Panel/Buttons/JoinButton")
+start_button = NodePath("../Panel/Buttons/StartButton")
+players_list = NodePath("../Panel/Players")
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1161862406]
 _spawnable_scenes = PackedStringArray("uid://bufebfuh3f6x4")

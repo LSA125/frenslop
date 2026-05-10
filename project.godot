@@ -12,16 +12,25 @@ config_version=5
 
 config/name="Frenslop"
 run/main_scene="uid://dp7hofscn4rvi"
-config/features=PackedStringArray("4.6", "C#", "Forward Plus")
+config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
-MultiplayerManager="*uid://dkvq0w8aro4bb"
+MultiplayerManager="*res://scripts/multiplayer/MultiplayerManager.gd"
+NetworkTime="*uid://cnqdxyjptkfvp"
+NetworkTimeSynchronizer="*uid://5rmn2ik3kjo8"
+NetworkRollback="*uid://gas743comroj"
+NetworkEvents="*uid://bdmobxxptryj0"
+NetworkPerformance="*uid://cqgf7aqmjfoa3"
 
 [dotnet]
 
 project/assembly_name="Frenslop"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/netfox.internals/plugin.cfg", "res://addons/netfox/plugin.cfg")
 
 [input]
 
@@ -53,6 +62,7 @@ MoveUp={
 
 [physics]
 
+2d/physics_engine="Rapier2D"
 3d/physics_engine="Jolt Physics"
 
 [rendering]

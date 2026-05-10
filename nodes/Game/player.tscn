@@ -1,36 +1,35 @@
 [gd_scene format=3 uid="uid://dnekija28fofs"]
 
-[ext_resource type="Script" uid="uid://8hsuin3yn0rv" path="res://scripts/game/Player.cs" id="1_c6bbt"]
-[ext_resource type="Script" uid="uid://bkkb1vgkegn7n" path="res://scripts/game/InputSynchronizer.cs" id="2_hs7lg"]
+[ext_resource type="Script" uid="uid://bwpilqapbafwf" path="res://scripts/game/Player.gd" id="1_c6bbt"]
+[ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_3n60s"]
+[ext_resource type="Script" uid="uid://xycjudc2mlmd" path="res://nodes/game/PlayerInput.gd" id="2_hs7lg"]
 [ext_resource type="Texture2D" uid="uid://c4qr7bspxv7kh" path="res://icon.svg" id="2_oqj8h"]
-
-[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_input"]
-properties/0/path = NodePath(".:InputDirection")
-properties/0/spawn = true
-properties/0/replication_mode = 1
-properties/1/path = NodePath(".:JumpInputSequence")
-properties/1/spawn = true
-properties/1/replication_mode = 1
-
-[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_movement"]
-properties/0/path = NodePath(".:position")
-properties/0/spawn = true
-properties/0/replication_mode = 1
+[ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_uj5xo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_u5sy4"]
 size = Vector2(59, 65)
 
-[node name="Player" type="CharacterBody2D" unique_id=571455046 node_paths=PackedStringArray("InputSync")]
+[node name="Player" type="CharacterBody2D" unique_id=571455046 node_paths=PackedStringArray("input", "rollback_sync")]
 script = ExtResource("1_c6bbt")
-InputSync = NodePath("InputSynchronizer")
+input = NodePath("Input")
+rollback_sync = NodePath("RollbackSynchronizer")
 
-[node name="InputSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=1276807357]
-root_path = NodePath(".")
-replication_config = SubResource("SceneReplicationConfig_input")
+[node name="RollbackSynchronizer" type="Node" parent="." unique_id=339786817 node_paths=PackedStringArray("root")]
+script = ExtResource("2_3n60s")
+root = NodePath("..")
+enable_prediction = true
+state_properties = Array[String]([":position", ":velocity"])
+input_properties = Array[String](["Input:movement", "Input:jump"])
+metadata/_custom_type_script = "uid://d350u8evihs1u"
+
+[node name="TickInterpolator" type="Node" parent="." unique_id=1587109047 node_paths=PackedStringArray("root")]
+script = ExtResource("3_uj5xo")
+root = NodePath("../RollbackSynchronizer")
+properties = Array[String]([":position"])
+metadata/_custom_type_script = "uid://dour8fehaaugp"
+
+[node name="Input" type="Node" parent="." unique_id=258905339]
 script = ExtResource("2_hs7lg")
-
-[node name="MovementSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=570347971]
-replication_config = SubResource("SceneReplicationConfig_movement")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1025110016]
 position = Vector2(267.5, 212.5)
