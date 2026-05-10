@@ -1,12 +1,11 @@
-extends CharacterBody2D
+extends RapierCharacterBody2D
 
-const SPEED := 300.0
-const JUMP_VELOCITY := -400.0
+@export var SPEED := 300.0
+@export var JUMP_VELOCITY := -400.0
 
 @export var input: PlayerInput
 @export var rollback_sync : RollbackSynchronizer
 
-var _last_handled_jump_input_sequence := 0
 func _ready() -> void:
 	await get_tree().process_frame
 	set_multiplayer_authority(1)
@@ -29,10 +28,9 @@ func apply_movement(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, SPEED)
 
-	var v_temp : Vector2 = velocity
 	velocity *= NetworkTime.physics_factor
 	move_and_slide()
-	velocity = v_temp
+	velocity /= NetworkTime.physics_factor
 
 func _force_update_is_on_floor():
 	var v_tmp : Vector2 = velocity

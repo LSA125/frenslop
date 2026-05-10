@@ -9,10 +9,12 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_u5sy4"]
 size = Vector2(59, 65)
 
-[node name="Player" type="CharacterBody2D" unique_id=571455046 node_paths=PackedStringArray("input", "rollback_sync")]
+[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync")]
 script = ExtResource("1_c6bbt")
+JUMP_VELOCITY = -600.0
 input = NodePath("Input")
 rollback_sync = NodePath("RollbackSynchronizer")
+metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 
 [node name="RollbackSynchronizer" type="Node" parent="." unique_id=339786817 node_paths=PackedStringArray("root")]
 script = ExtResource("2_3n60s")
@@ -24,8 +26,8 @@ metadata/_custom_type_script = "uid://d350u8evihs1u"
 
 [node name="TickInterpolator" type="Node" parent="." unique_id=1587109047 node_paths=PackedStringArray("root")]
 script = ExtResource("3_uj5xo")
-root = NodePath("../RollbackSynchronizer")
-properties = Array[String]([":position"])
+root = NodePath("..")
+properties = Array[String]([":position", ":velocity"])
 metadata/_custom_type_script = "uid://dour8fehaaugp"
 
 [node name="Input" type="Node" parent="." unique_id=258905339]

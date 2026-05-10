@@ -23,6 +23,8 @@ NetworkTimeSynchronizer="*uid://5rmn2ik3kjo8"
 NetworkRollback="*uid://gas743comroj"
 NetworkEvents="*uid://bdmobxxptryj0"
 NetworkPerformance="*uid://cqgf7aqmjfoa3"
+WindowTiler="*uid://cmqjajhjgffm1"
+NetworkSimulator="*uid://1y2ey1e6qjwr"
 
 [dotnet]
 
@@ -30,7 +32,7 @@ project/assembly_name="Frenslop"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/netfox.internals/plugin.cfg", "res://addons/netfox/plugin.cfg")
+enabled=PackedStringArray("res://addons/netfox.extras/plugin.cfg", "res://addons/netfox.internals/plugin.cfg", "res://addons/netfox/plugin.cfg")
 
 [input]
 
