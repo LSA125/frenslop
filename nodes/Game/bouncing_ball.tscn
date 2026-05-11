@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://da56g8aro0wvx"]
+
+[ext_resource type="Script" uid="uid://bjyjwamy0irb3" path="res://scripts/game/BouncingBall.gd" id="1_5llor"]
+[ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_l388i"]
+[ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_5llor"]
+[ext_resource type="Texture2D" uid="uid://d26bo4pfwpx62" path="res://Obama_sphere.webp" id="4_gdkec"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_3xj3m"]
+
+[node name="BouncingBall" type="RigidBody2D" unique_id=934173636]
+script = ExtResource("1_5llor")
+
+[node name="RollbackSynchronizer" type="Node" parent="." unique_id=1515432183 node_paths=PackedStringArray("root")]
+script = ExtResource("2_l388i")
+root = NodePath("..")
+enable_prediction = true
+state_properties = Array[String]([":physics_state"])
+enable_input_broadcast = false
+metadata/_custom_type_script = "uid://d350u8evihs1u"
+
+[node name="TickInterpolator" type="Node" parent="." unique_id=1963980015 node_paths=PackedStringArray("root")]
+script = ExtResource("3_5llor")
+root = NodePath("..")
+properties = Array[String]([":position"])
+metadata/_custom_type_script = "uid://dour8fehaaugp"
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=7575193]
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("4_gdkec")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=62900712]
+shape = SubResource("CircleShape2D_3xj3m")

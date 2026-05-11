@@ -6,6 +6,8 @@ extends RapierCharacterBody2D
 @export var input: PlayerInput
 @export var rollback_sync : RollbackSynchronizer
 
+@export var external_velocity : Vector2 = Vector2.ZERO
+
 func _ready() -> void:
 	await get_tree().process_frame
 	set_multiplayer_authority(1)
@@ -16,7 +18,6 @@ func _rollback_tick(delta: float, tick, is_fresh) -> void:
 	apply_movement(delta)
 
 func apply_movement(delta: float) -> void:
-	_force_update_is_on_floor()
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 	else:

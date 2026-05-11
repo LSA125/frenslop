@@ -3,6 +3,8 @@
 [ext_resource type="PackedScene" uid="uid://dnekija28fofs" path="res://nodes/game/player.tscn" id="1_ibkli"]
 [ext_resource type="Script" uid="uid://dp1gd78pe4fwp" path="res://scripts/game/MultiplayerSpawner.gd" id="2_qbsmt"]
 [ext_resource type="PackedScene" uid="uid://dxdilstx04hyq" path="res://nodes/game/moving_platform.tscn" id="3_cpr0p"]
+[ext_resource type="PackedScene" uid="uid://da56g8aro0wvx" path="res://nodes/game/bouncing_ball.tscn" id="4_78awf"]
+[ext_resource type="Script" uid="uid://bcc28dvk0pufe" path="res://addons/netfox.extras/physics/rapier_driver_2d.gd" id="5_s0nni"]
 
 [sub_resource type="Gradient" id="Gradient_lbhrr"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
@@ -26,6 +28,38 @@ texture = SubResource("GradientTexture1D_iywne")
 position = Vector2(576, 628)
 shape = SubResource("RectangleShape2D_p57ef")
 
+[node name="Wall" type="StaticBody2D" parent="." unique_id=526584719]
+position = Vector2(0, 100)
+rotation = 1.5707964
+
+[node name="Sprite2D" type="Sprite2D" parent="Wall" unique_id=1108256697]
+scale = Vector2(4.4882813, 41.00006)
+texture = SubResource("GradientTexture1D_iywne")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Wall" unique_id=705173714]
+shape = SubResource("RectangleShape2D_p57ef")
+
+[node name="Wall2" type="StaticBody2D" parent="." unique_id=1873483887]
+position = Vector2(1170, 100)
+rotation = 1.5707964
+
+[node name="Sprite2D" type="Sprite2D" parent="Wall2" unique_id=1729693681]
+scale = Vector2(4.4882813, 41.00006)
+texture = SubResource("GradientTexture1D_iywne")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Wall2" unique_id=1766109644]
+shape = SubResource("RectangleShape2D_p57ef")
+
+[node name="Ceil" type="StaticBody2D" parent="." unique_id=1920001411]
+position = Vector2(585, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="Ceil" unique_id=770140457]
+scale = Vector2(4.4882813, 41.00006)
+texture = SubResource("GradientTexture1D_iywne")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ceil" unique_id=2093000880]
+shape = SubResource("RectangleShape2D_p57ef")
+
 [node name="Players" type="Node2D" parent="." unique_id=1406540887]
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1459777557]
@@ -37,3 +71,20 @@ player_scene = ExtResource("1_ibkli")
 
 [node name="MovingPlatform" parent="." unique_id=585119023 instance=ExtResource("3_cpr0p")]
 position = Vector2(1072, 575)
+sync_to_physics = false
+
+[node name="MovingPlatform2" parent="." unique_id=1493385953 instance=ExtResource("3_cpr0p")]
+position = Vector2(500, 500)
+sync_to_physics = false
+distance_y = 0
+distance_x = 200
+
+[node name="BouncingBall" parent="." unique_id=934173636 instance=ExtResource("4_78awf")]
+position = Vector2(700, 100)
+
+[node name="BouncingBall2" parent="." unique_id=159916792 instance=ExtResource("4_78awf")]
+position = Vector2(300, 100)
+
+[node name="RapierDriver2D" type="Node" parent="." unique_id=626040089]
+script = ExtResource("5_s0nni")
+metadata/_custom_type_script = "uid://bcc28dvk0pufe"

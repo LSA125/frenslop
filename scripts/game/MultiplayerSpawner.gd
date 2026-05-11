@@ -5,7 +5,9 @@ extends MultiplayerSpawner
 func _ready() -> void:
 	if multiplayer.is_server():
 		var counter := 0
-		for player_id in MultiplayerManager.players.keys():
+		var peers_and_self : PackedInt32Array = multiplayer.get_peers()
+		peers_and_self.append(1)
+		for player_id in peers_and_self:
 			print("Spawning player for ID %s" % player_id)
 			var player_instance = player_scene.instantiate()
 			player_instance.name = str(player_id)

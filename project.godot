@@ -62,6 +62,11 @@ MoveUp={
 ]
 }
 
+[netfox]
+
+time/tickrate=60
+rollback/input_delay=3
+
 [physics]
 
 2d/physics_engine="Rapier2D"

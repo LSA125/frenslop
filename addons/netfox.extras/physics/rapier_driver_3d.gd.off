@@ -2,17 +2,22 @@ extends PhysicsDriver
 
 class_name RapierDriver3D
 
+var state_manager: Node
+
 func _init_physics_space() -> void:
 	physics_space = get_viewport().world_3d.space
 	PhysicsServer3D.space_set_active(physics_space, false)
+	state_manager = ClassDB.instantiate("StateManager3D")
+	state_manager.set("root_node", get_tree().current_scene if get_tree().current_scene else get_tree().root)
+	add_child(state_manager)
 
 func _physics_step(delta) -> void:
 	RapierPhysicsServer3D.space_step(physics_space, delta)
 	RapierPhysicsServer3D.space_flush_queries(physics_space)
 	
 func _snapshot_space(tick: int) -> void:
-	snapshots[tick] = RapierPhysicsServer3D.export_binary(physics_space)
+	snapshots[tick] = state_manager.export_state(physics_space, "RustBincode")
 
 func _rollback_space(tick) -> void:
 	if snapshots.has(tick):
-		RapierPhysicsServer3D.import_binary(physics_space, snapshots[tick])
+		state_manager.import_state(physics_space, snapshots[tick])

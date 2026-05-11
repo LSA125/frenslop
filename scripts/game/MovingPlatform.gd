@@ -13,9 +13,10 @@ func _ready() -> void:
 	start_position = global_position
 	end_position = Vector2(start_position.x + distance_x, start_position.y + distance_y)
 	server_position = start_position
-	NetworkTime.on_tick.connect(_tick)
-
-func _tick(delta: float, tick) -> void:
+	set_multiplayer_authority(1,true)
+	$RollbackSynchronizer.process_settings()
+	
+func _rollback_tick(delta: float, tick, is_fresh) -> void:
 	var target_position := end_position if moving_to_end else start_position
 	global_position = global_position.move_toward(target_position, speed * delta)
 

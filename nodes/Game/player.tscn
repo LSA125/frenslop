@@ -10,6 +10,7 @@
 size = Vector2(59, 65)
 
 [node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync")]
+floor_snap_length = 5.4
 script = ExtResource("1_c6bbt")
 JUMP_VELOCITY = -600.0
 input = NodePath("Input")
@@ -34,10 +35,9 @@ metadata/_custom_type_script = "uid://dour8fehaaugp"
 script = ExtResource("2_hs7lg")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1025110016]
-position = Vector2(267.5, 212.5)
 scale = Vector2(0.52343756, 0.52343756)
 texture = ExtResource("2_oqj8h")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=99890407]
-position = Vector2(267.5, 213.5)
+position = Vector2(0, 1)
 shape = SubResource("RectangleShape2D_u5sy4")
