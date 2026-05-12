@@ -65,8 +65,6 @@ MoveUp={
 [netfox]
 
 time/tickrate=60
-rollback/input_redundancy=6
-rollback/input_delay=6
 
 [physics]
 

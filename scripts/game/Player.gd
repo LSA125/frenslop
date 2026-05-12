@@ -25,8 +25,19 @@ func _rollback_tick(delta: float, tick, is_fresh) -> void:
 	apply_movement(delta)
 
 func apply_movement(delta: float) -> void:
+	var on_platform := false
 	_force_update_is_on_floor()
-	if not is_on_floor():
+	
+		#check platforms/players and add velocity
+	floor_vel = Vector2.ZERO
+	var floor_collision := KinematicCollision2D.new()
+	if test_move(global_transform, Vector2.DOWN*DOWN_SCAN, floor_collision):
+		var collider : Node2D = floor_collision.get_collider()
+		if collider is MovingPlatform or collider is Player and collider.global_position.y > global_position.y:
+			floor_vel = collider.get_net_velocity()
+			on_platform = true
+			
+	if not is_on_floor() and not on_platform:
 		velocity += get_gravity() * delta
 	else:
 		velocity.y = JUMP_VELOCITY * input.jump
@@ -36,14 +47,8 @@ func apply_movement(delta: float) -> void:
 		velocity.x = direction.x * SPEED
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, SPEED)
+	
 		
-	#check platforms/players and add velocity
-	floor_vel = Vector2.ZERO
-	var floor_collision := KinematicCollision2D.new()
-	if test_move(global_transform, Vector2.DOWN*DOWN_SCAN, floor_collision):
-		var collider : Node2D = floor_collision.get_collider()
-		if collider is MovingPlatform or collider is Player and collider.global_position.y > global_position.y:
-			floor_vel = collider.get_net_velocity()
 	velocity += floor_vel
 	velocity *= NetworkTime.physics_factor
 	move_and_slide()

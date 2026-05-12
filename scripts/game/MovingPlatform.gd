@@ -7,7 +7,7 @@ class_name MovingPlatform
 
 var start_position := Vector2.ZERO
 var end_position := Vector2.ZERO
-var distance := 0
+var distance := 0.0
 var _velocity : Vector2 = Vector2.ZERO
 
 #for collisions to detect moving speed.
