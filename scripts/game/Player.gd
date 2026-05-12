@@ -18,6 +18,7 @@ func _rollback_tick(delta: float, tick, is_fresh) -> void:
 	apply_movement(delta)
 
 func apply_movement(delta: float) -> void:
+	_force_update_is_on_floor()
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 	else:
@@ -38,4 +39,3 @@ func _force_update_is_on_floor():
 	velocity = Vector2.ZERO
 	move_and_slide()
 	velocity = v_tmp
-	
