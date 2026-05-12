@@ -12,9 +12,12 @@ size = Vector2(59, 65)
 [node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync")]
 floor_snap_length = 5.4
 script = ExtResource("1_c6bbt")
+SPEED = null
 JUMP_VELOCITY = -600.0
 input = NodePath("Input")
 rollback_sync = NodePath("RollbackSynchronizer")
+external_velocity = null
+body_skin = null
 metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 
 [node name="RollbackSynchronizer" type="Node" parent="." unique_id=339786817 node_paths=PackedStringArray("root")]

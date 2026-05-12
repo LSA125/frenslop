@@ -1,8 +1,6 @@
 [gd_scene format=3 uid="uid://dxdilstx04hyq"]
 
 [ext_resource type="Script" uid="uid://dogee3fjy71wn" path="res://scripts/game/MovingPlatform.gd" id="1_qjc1e"]
-[ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_apexv"]
-[ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_lawpf"]
 
 [sub_resource type="Gradient" id="Gradient_78awf"]
 
@@ -13,24 +11,11 @@ gradient = SubResource("Gradient_78awf")
 size = Vector2(76, 20)
 
 [node name="MovingPlatform" type="AnimatableBody2D" unique_id=1493385953]
+sync_to_physics = false
 script = ExtResource("1_qjc1e")
 distance_y = -200
 distance_x = 0
 metadata/_custom_type_script = "uid://b1u335fltss66"
-
-[node name="RollbackSynchronizer" type="Node" parent="." unique_id=2017300894 node_paths=PackedStringArray("root")]
-script = ExtResource("2_apexv")
-root = NodePath("..")
-enable_prediction = true
-state_properties = Array[String]([":position"])
-enable_input_broadcast = false
-metadata/_custom_type_script = "uid://d350u8evihs1u"
-
-[node name="TickInterpolator" type="Node" parent="." unique_id=2128243319 node_paths=PackedStringArray("root")]
-script = ExtResource("3_lawpf")
-root = NodePath("..")
-properties = Array[String]([":position"])
-metadata/_custom_type_script = "uid://dour8fehaaugp"
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=746812819]
 position = Vector2(27.999998, -6.67572e-06)
