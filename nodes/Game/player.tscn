@@ -7,31 +7,33 @@
 [ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_uj5xo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_u5sy4"]
-size = Vector2(59, 65)
+size = Vector2(62, 65)
 
-[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync")]
-floor_snap_length = 5.4
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3n60s"]
+size = Vector2(58, 20)
+
+[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "floor_detector")]
+floor_snap_length = 32.0
 script = ExtResource("1_c6bbt")
-SPEED = null
 JUMP_VELOCITY = -600.0
 input = NodePath("Input")
 rollback_sync = NodePath("RollbackSynchronizer")
-external_velocity = null
-body_skin = null
+collision_shape = NodePath("CollisionShape2D")
+floor_detector = NodePath("FloorCast2D")
 metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 
 [node name="RollbackSynchronizer" type="Node" parent="." unique_id=339786817 node_paths=PackedStringArray("root")]
 script = ExtResource("2_3n60s")
 root = NodePath("..")
 enable_prediction = true
-state_properties = Array[String]([":position", ":velocity"])
+state_properties = Array[String]([":position", ":velocity", ":floor_vel"])
 input_properties = Array[String](["Input:movement", "Input:jump"])
 metadata/_custom_type_script = "uid://d350u8evihs1u"
 
 [node name="TickInterpolator" type="Node" parent="." unique_id=1587109047 node_paths=PackedStringArray("root")]
 script = ExtResource("3_uj5xo")
 root = NodePath("..")
-properties = Array[String]([":position", ":velocity"])
+properties = Array[String]([":position"])
 metadata/_custom_type_script = "uid://dour8fehaaugp"
 
 [node name="Input" type="Node" parent="." unique_id=258905339]
@@ -44,3 +46,8 @@ texture = ExtResource("2_oqj8h")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=99890407]
 position = Vector2(0, 1)
 shape = SubResource("RectangleShape2D_u5sy4")
+
+[node name="FloorCast2D" type="ShapeCast2D" parent="." unique_id=732298474]
+position = Vector2(0, 25)
+shape = SubResource("RectangleShape2D_3n60s")
+target_position = Vector2(0, 0)

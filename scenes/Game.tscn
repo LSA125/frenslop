@@ -3,8 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://dnekija28fofs" path="res://nodes/game/player.tscn" id="1_ibkli"]
 [ext_resource type="Script" uid="uid://dp1gd78pe4fwp" path="res://scripts/game/MultiplayerSpawner.gd" id="2_qbsmt"]
 [ext_resource type="PackedScene" uid="uid://dxdilstx04hyq" path="res://nodes/game/moving_platform.tscn" id="3_cpr0p"]
-[ext_resource type="PackedScene" uid="uid://da56g8aro0wvx" path="res://nodes/game/bouncing_ball.tscn" id="4_78awf"]
-[ext_resource type="Script" uid="uid://bcc28dvk0pufe" path="res://addons/netfox.extras/physics/rapier_driver_2d.gd" id="5_s0nni"]
+[ext_resource type="Script" uid="uid://bcc28dvk0pufe" path="res://addons/netfox.extras/physics/rapier_driver_2d.gd" id="4_78awf"]
 
 [sub_resource type="Gradient" id="Gradient_lbhrr"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
@@ -14,6 +13,19 @@ gradient = SubResource("Gradient_lbhrr")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_p57ef"]
 size = Vector2(1150, 40)
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_s0nni"]
+friction = 0.0
+bounce = 0.49
+
+[sub_resource type="Gradient" id="Gradient_s0nni"]
+colors = PackedColorArray(0.1106144, 0.516303, 0.67790616, 1, 0, 0.5315873, 0.93375736, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_aug50"]
+gradient = SubResource("Gradient_s0nni")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kiw3p"]
+size = Vector2(256, 9)
 
 [node name="Game" type="Node2D" unique_id=1550934290]
 
@@ -27,6 +39,18 @@ texture = SubResource("GradientTexture1D_iywne")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Floor" unique_id=800733652]
 position = Vector2(576, 628)
 shape = SubResource("RectangleShape2D_p57ef")
+
+[node name="Floor2" type="StaticBody2D" parent="." unique_id=871424048]
+physics_material_override = SubResource("PhysicsMaterial_s0nni")
+
+[node name="Sprite2D" type="Sprite2D" parent="Floor2" unique_id=422358787]
+position = Vector2(578.5, 600.5)
+scale = Vector2(1, 9.135)
+texture = SubResource("GradientTexture1D_aug50")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor2" unique_id=1261990294]
+position = Vector2(579, 600.5)
+shape = SubResource("RectangleShape2D_kiw3p")
 
 [node name="Wall" type="StaticBody2D" parent="." unique_id=526584719]
 position = Vector2(0, 100)
@@ -71,20 +95,16 @@ player_scene = ExtResource("1_ibkli")
 
 [node name="MovingPlatform" parent="." unique_id=585119023 instance=ExtResource("3_cpr0p")]
 position = Vector2(1072, 575)
-sync_to_physics = false
 
 [node name="MovingPlatform2" parent="." unique_id=1493385953 instance=ExtResource("3_cpr0p")]
 position = Vector2(500, 500)
-sync_to_physics = false
 distance_y = 0
 distance_x = 200
 
-[node name="BouncingBall" parent="." unique_id=934173636 instance=ExtResource("4_78awf")]
-position = Vector2(700, 100)
+[node name="MovingPlatform3" parent="." unique_id=1248796923 instance=ExtResource("3_cpr0p")]
+position = Vector2(300, 500)
+distance_x = 200
 
-[node name="BouncingBall2" parent="." unique_id=159916792 instance=ExtResource("4_78awf")]
-position = Vector2(300, 100)
-
-[node name="RapierDriver2D" type="Node" parent="." unique_id=626040089]
-script = ExtResource("5_s0nni")
+[node name="RapierDriver2D" type="Node" parent="." unique_id=843075355]
+script = ExtResource("4_78awf")
 metadata/_custom_type_script = "uid://bcc28dvk0pufe"

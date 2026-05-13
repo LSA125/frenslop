@@ -10,11 +10,12 @@ gradient = SubResource("Gradient_78awf")
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_aug50"]
 size = Vector2(76, 20)
 
-[node name="MovingPlatform" type="AnimatableBody2D" unique_id=1493385953]
+[node name="MovingPlatform" type="AnimatableBody2D" unique_id=1493385953 node_paths=PackedStringArray("collision_shape")]
 sync_to_physics = false
 script = ExtResource("1_qjc1e")
 distance_y = -200
 distance_x = 0
+collision_shape = NodePath("CollisionShape2D")
 metadata/_custom_type_script = "uid://b1u335fltss66"
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=746812819]

@@ -21,7 +21,7 @@ metadata/_custom_type_script = "uid://d350u8evihs1u"
 [node name="TickInterpolator" type="Node" parent="." unique_id=1963980015 node_paths=PackedStringArray("root")]
 script = ExtResource("3_5llor")
 root = NodePath("..")
-properties = Array[String]([":position"])
+properties = Array[String]([":physics_state"])
 metadata/_custom_type_script = "uid://dour8fehaaugp"
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=7575193]

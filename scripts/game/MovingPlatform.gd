@@ -5,6 +5,8 @@ class_name MovingPlatform
 @export var distance_x := 200
 @export var server_position := Vector2.ZERO
 
+@export var collision_shape : CollisionShape2D
+
 var start_position := Vector2.ZERO
 var end_position := Vector2.ZERO
 var distance := 0.0
@@ -13,6 +15,9 @@ var _velocity : Vector2 = Vector2.ZERO
 #for collisions to detect moving speed.
 func get_net_velocity() -> Vector2:
 	return _velocity
+	
+func get_platform_height() -> float:
+	return global_position.y - collision_shape.shape.size.y/2
 
 func _ready() -> void:
 	start_position = global_position
@@ -22,11 +27,11 @@ func _ready() -> void:
 	NetworkRollback.on_prepare_tick.connect(_apply_tick)
 	
 func _apply_tick(tick) -> void:
-	var previous_position = _get_position_for_tick(tick - 1)
+	var previous_position = global_position
 	global_position = _get_position_for_tick(tick)
 
 	_velocity = (global_position - previous_position) / NetworkTime.ticktime
-		
+
 func _get_position_for_tick(tick: int):
 	var distance_moved = NetworkTime.ticks_to_seconds(tick) * speed
 	var progress = distance_moved / distance
