@@ -22,9 +22,6 @@ func _ready() -> void:
 
 func get_net_velocity() -> Vector2:
 	return velocity + floor_vel
-
-func get_platform_height() -> float:
-	return global_position.y - collision_shape.shape.size.y/2
 	
 func _rollback_tick(delta: float, _tick, _is_fresh) -> void:
 	apply_movement(delta)

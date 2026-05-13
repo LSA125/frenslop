@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dxdilstx04hyq"]
 
 [ext_resource type="Script" uid="uid://dogee3fjy71wn" path="res://scripts/game/MovingPlatform.gd" id="1_qjc1e"]
+[ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_apexv"]
 
 [sub_resource type="Gradient" id="Gradient_78awf"]
 
@@ -10,7 +11,7 @@ gradient = SubResource("Gradient_78awf")
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_aug50"]
 size = Vector2(76, 20)
 
-[node name="MovingPlatform" type="AnimatableBody2D" unique_id=1493385953 node_paths=PackedStringArray("collision_shape")]
+[node name="MovingPlatform" type="AnimatableBody2D" unique_id=461333593 node_paths=PackedStringArray("collision_shape")]
 sync_to_physics = false
 script = ExtResource("1_qjc1e")
 distance_y = -200
@@ -27,3 +28,9 @@ texture = SubResource("GradientTexture1D_s0nni")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=955408764]
 position = Vector2(28, 0)
 shape = SubResource("RectangleShape2D_aug50")
+
+[node name="TickInterpolator" type="Node" parent="." unique_id=194321544 node_paths=PackedStringArray("root")]
+script = ExtResource("3_apexv")
+root = NodePath("..")
+properties = Array[String]([":position"])
+metadata/_custom_type_script = "uid://dour8fehaaugp"
