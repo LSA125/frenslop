@@ -15,16 +15,21 @@ var _velocity : Vector2 = Vector2.ZERO
 #for collisions to detect moving speed.
 func get_net_velocity() -> Vector2:
 	return _velocity
-	
+
+func get_platform_height() -> float:
+	return global_position.y - collision_shape.shape.size.y/2
 
 func _ready() -> void:
+	await get_tree().process_frame
 	start_position = global_position
 	end_position = Vector2(start_position.x + distance_x, start_position.y + distance_y)
 	distance = start_position.distance_to(end_position)
 	server_position = start_position
-	NetworkRollback.on_prepare_tick.connect(_apply_tick)
+	set_multiplayer_authority(1,true)
+	$RollbackSynchronizer.process_settings()
 	
-func _apply_tick(tick) -> void:
+	
+func _rollback_tick(_delta, tick, _is_fresh) -> void:
 	var previous_position = _get_position_for_tick(tick-1)
 	global_position = _get_position_for_tick(tick)
 	_velocity = (global_position-previous_position) / NetworkTime.ticktime

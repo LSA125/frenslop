@@ -10,7 +10,7 @@
 size = Vector2(62, 65)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3n60s"]
-size = Vector2(60, 20)
+size = Vector2(60, 10)
 
 [node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "floor_detector")]
 floor_snap_length = 32.0
@@ -48,6 +48,6 @@ position = Vector2(0, 1)
 shape = SubResource("RectangleShape2D_u5sy4")
 
 [node name="FloorCast2D" type="ShapeCast2D" parent="." unique_id=732298474]
-position = Vector2(0, 27)
+position = Vector2(0, 35)
 shape = SubResource("RectangleShape2D_3n60s")
 target_position = Vector2(0, 0)

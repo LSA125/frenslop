@@ -1,7 +1,7 @@
 extends NetworkRigidBody2D
 class_name BouncingBall
 
-@export var bounce_force: float = 16000.0
+@export var bounce_force: float = 32000.0
 @export var max_contacts: int = 4
 
 func _ready() -> void:

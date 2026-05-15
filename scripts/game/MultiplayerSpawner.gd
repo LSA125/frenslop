@@ -4,7 +4,7 @@ extends MultiplayerSpawner
 
 func _ready() -> void:
 	if multiplayer.is_server():
-		var counter := 0
+		var counter := 1
 		var peers_and_self : PackedInt32Array = multiplayer.get_peers()
 		peers_and_self.append(1)
 		for player_id in peers_and_self:

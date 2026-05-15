@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://dp1gd78pe4fwp" path="res://scripts/game/MultiplayerSpawner.gd" id="2_qbsmt"]
 [ext_resource type="PackedScene" uid="uid://dxdilstx04hyq" path="res://nodes/game/moving_platform.tscn" id="3_cpr0p"]
 [ext_resource type="Script" uid="uid://bcc28dvk0pufe" path="res://addons/netfox.extras/physics/rapier_driver_2d.gd" id="4_78awf"]
+[ext_resource type="PackedScene" uid="uid://da56g8aro0wvx" path="res://nodes/game/bouncing_ball.tscn" id="5_s0nni"]
 
 [sub_resource type="Gradient" id="Gradient_lbhrr"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
@@ -107,4 +108,9 @@ distance_x = 200
 
 [node name="RapierDriver2D" type="Node" parent="." unique_id=843075355]
 script = ExtResource("4_78awf")
-metadata/_custom_type_script = "uid://bcc28dvk0pufe"
+
+[node name="BouncingBall" parent="." unique_id=934173636 instance=ExtResource("5_s0nni")]
+position = Vector2(823, 302)
+
+[node name="BouncingBall2" parent="." unique_id=1634551022 instance=ExtResource("5_s0nni")]
+position = Vector2(427, 95)

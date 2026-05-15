@@ -64,13 +64,21 @@ MoveUp={
 
 [netfox]
 
-time/max_ticks_per_frame=60
 rollback/input_redundancy=6
+time/sync_to_physics=false
+time/tickrate=60
+time/max_ticks_per_frame=30
+rollback/input_delay=6
 
 [physics]
 
 2d/physics_engine="Rapier2D"
 3d/physics_engine="Jolt Physics"
+rapier/solver/preset=1
+rapier/solver/num_internal_pgs_iterations=4
+rapier/solver/num_internal_stabilization_iterations=4
+rapier/solver/contact_damping_ratio=20.0
+rapier/solver/contact_natural_frequency=50.0
 
 [rendering]
 
