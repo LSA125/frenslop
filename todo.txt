@@ -2,4 +2,8 @@ Hide Host/Join buttons when in lobby
 
 Add quit buttons
 
-Begin main scene
+Add animations
+
+Add pushing
+
+Add equip system

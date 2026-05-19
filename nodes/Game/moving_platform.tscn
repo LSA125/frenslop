@@ -34,11 +34,10 @@ properties = Array[String]([":position"])
 metadata/_custom_type_script = "uid://dour8fehaaugp"
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=746812819]
-position = Vector2(27.999998, -6.67572e-06)
+position = Vector2(38.169334, 0.08523849)
 rotation = 1.5707964
-scale = Vector2(0.08309665, 78.18183)
+scale = Vector2(0.07798518, 76.27013)
 texture = SubResource("GradientTexture1D_s0nni")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=955408764]
-position = Vector2(28, 0)
 shape = SubResource("RectangleShape2D_aug50")

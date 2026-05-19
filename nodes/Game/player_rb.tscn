@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://d2a43d0d04lel"]
+
+[ext_resource type="Script" uid="uid://c2jishjpa6fcw" path="res://scripts/game/PlayerRb.gd" id="1_5w67u"]
+[ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_of2un"]
+[ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_mhs5m"]
+[ext_resource type="Script" uid="uid://xycjudc2mlmd" path="res://nodes/game/PlayerInput.gd" id="4_084wh"]
+[ext_resource type="Texture2D" uid="uid://c4qr7bspxv7kh" path="res://icon.svg" id="5_37oji"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_u5sy4"]
+size = Vector2(62, 65)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3n60s"]
+size = Vector2(60, 10)
+
+[node name="Player" type="RigidBody2D" unique_id=309564206 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "floor_detector")]
+script = ExtResource("1_5w67u")
+SPEED = 500.0
+JUMP_VELOCITY = -1000.0
+input = NodePath("Input")
+rollback_sync = NodePath("RollbackSynchronizer")
+collision_shape = NodePath("CollisionShape2D")
+floor_detector = NodePath("FloorCast2D")
+metadata/_custom_type_script = "uid://c8hw7ol53m55g"
+
+[node name="RollbackSynchronizer" type="Node" parent="." unique_id=339786817 node_paths=PackedStringArray("root")]
+script = ExtResource("2_of2un")
+root = NodePath("..")
+enable_prediction = true
+state_properties = Array[String]([":physics_state", ":floor_vel"])
+input_properties = Array[String](["Input:movement", "Input:jump"])
+metadata/_custom_type_script = "uid://d350u8evihs1u"
+
+[node name="TickInterpolator" type="Node" parent="." unique_id=1587109047 node_paths=PackedStringArray("root")]
+script = ExtResource("3_mhs5m")
+root = NodePath("..")
+properties = Array[String]([":physics_state"])
+metadata/_custom_type_script = "uid://dour8fehaaugp"
+
+[node name="Input" type="Node" parent="." unique_id=258905339]
+script = ExtResource("4_084wh")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1025110016]
+scale = Vector2(0.52343756, 0.52343756)
+texture = ExtResource("5_37oji")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=99890407]
+position = Vector2(0, 1)
+shape = SubResource("RectangleShape2D_u5sy4")
+
+[node name="FloorCast2D" type="ShapeCast2D" parent="." unique_id=732298474]
+position = Vector2(0, 35)
+shape = SubResource("RectangleShape2D_3n60s")
+target_position = Vector2(0, 0)

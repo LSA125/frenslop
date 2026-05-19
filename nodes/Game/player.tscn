@@ -3,30 +3,34 @@
 [ext_resource type="Script" uid="uid://bwpilqapbafwf" path="res://scripts/game/Player.gd" id="1_c6bbt"]
 [ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_3n60s"]
 [ext_resource type="Script" uid="uid://xycjudc2mlmd" path="res://nodes/game/PlayerInput.gd" id="2_hs7lg"]
-[ext_resource type="Texture2D" uid="uid://c4qr7bspxv7kh" path="res://icon.svg" id="2_oqj8h"]
 [ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_uj5xo"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_u5sy4"]
-size = Vector2(62, 65)
+[ext_resource type="SpriteFrames" uid="uid://6ugma7wj5m3y" path="res://assets/shared/MaskDudeSpiteFrames.tres" id="5_afa2h"]
+[ext_resource type="Shape2D" uid="uid://dlua18bl7y8gu" path="res://assets/shared/PlayerBodyShape.tres" id="6_uj5xo"]
+[ext_resource type="Script" uid="uid://q1raen8cu66o" path="res://nodes/game/hand.gd" id="7_afa2h"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3n60s"]
-size = Vector2(60, 10)
+size = Vector2(15, 5)
 
-[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "floor_detector")]
-floor_snap_length = 32.0
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_afa2h"]
+size = Vector2(6.5, 20.5)
+
+[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "floor_detector", "effects_detector", "internal_effects_holder")]
 script = ExtResource("1_c6bbt")
 JUMP_VELOCITY = -600.0
+SNAP_DISTANCE = 2
 input = NodePath("Input")
 rollback_sync = NodePath("RollbackSynchronizer")
 collision_shape = NodePath("CollisionShape2D")
-floor_detector = NodePath("FloorCast2D")
+floor_detector = NodePath("FloorDetector")
+effects_detector = NodePath("EffectsDetector")
+internal_effects_holder = NodePath("InternalEffects")
 metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 
 [node name="RollbackSynchronizer" type="Node" parent="." unique_id=339786817 node_paths=PackedStringArray("root")]
 script = ExtResource("2_3n60s")
 root = NodePath("..")
 enable_prediction = true
-state_properties = Array[String]([":position", ":velocity", ":floor_vel"])
+state_properties = Array[String]([":position", ":velocity"])
 input_properties = Array[String](["Input:movement", "Input:jump"])
 metadata/_custom_type_script = "uid://d350u8evihs1u"
 
@@ -39,15 +43,35 @@ metadata/_custom_type_script = "uid://dour8fehaaugp"
 [node name="Input" type="Node" parent="." unique_id=258905339]
 script = ExtResource("2_hs7lg")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1025110016]
-scale = Vector2(0.52343756, 0.52343756)
-texture = ExtResource("2_oqj8h")
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=791727306]
+sprite_frames = ExtResource("5_afa2h")
+animation = &"fall"
+frame_progress = 0.6621661
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=99890407]
-position = Vector2(0, 1)
-shape = SubResource("RectangleShape2D_u5sy4")
+position = Vector2(0, 4.5)
+shape = ExtResource("6_uj5xo")
 
-[node name="FloorCast2D" type="ShapeCast2D" parent="." unique_id=732298474]
-position = Vector2(0, 35)
+[node name="FloorDetector" type="ShapeCast2D" parent="." unique_id=732298474]
+position = Vector2(0, 17)
 shape = SubResource("RectangleShape2D_3n60s")
 target_position = Vector2(0, 0)
+
+[node name="EffectsDetector" type="ShapeCast2D" parent="." unique_id=738121317]
+position = Vector2(0, 4.5)
+shape = ExtResource("6_uj5xo")
+target_position = Vector2(0, 0)
+collide_with_areas = true
+
+[node name="InternalEffects" type="Node" parent="." unique_id=2005917229]
+
+[node name="Equips" type="Node" parent="." unique_id=523913569]
+
+[node name="Hand" type="Area2D" parent="Equips" unique_id=1763644857]
+monitoring = false
+monitorable = false
+script = ExtResource("7_afa2h")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Equips/Hand" unique_id=1348762664]
+position = Vector2(10, 5)
+shape = SubResource("RectangleShape2D_afa2h")

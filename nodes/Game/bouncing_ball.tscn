@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bjyjwamy0irb3" path="res://scripts/game/BouncingBall.gd" id="1_5llor"]
 [ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_l388i"]
 [ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_5llor"]
-[ext_resource type="Texture2D" uid="uid://d26bo4pfwpx62" path="res://Obama_sphere.webp" id="4_gdkec"]
+[ext_resource type="Texture2D" uid="uid://d26bo4pfwpx62" path="res://assets/Obama_sphere.webp" id="4_gdkec"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_3xj3m"]
 
