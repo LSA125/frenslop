@@ -2,10 +2,15 @@ extends Node2D
 class_name Equip
 
 var player: Player
+var attached_to_player := false
+var DEFAULT_POS : Vector2 = Vector2.ZERO
 
 func _ready() -> void:
-	player = get_parent().get_parent() as Player
+	DEFAULT_POS = Vector2.ZERO
 	
+func pick_up(player) -> void:
+	pass
+		
 func equip_tick(delta : float, input : PlayerInput) -> void:
 	pass
 
@@ -18,3 +23,6 @@ func on_equip() -> void:
 	
 func on_unequip() -> void:
 	hide()
+
+func flip_horizontal(right : bool) -> void:
+	pass

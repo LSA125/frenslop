@@ -11,18 +11,23 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3n60s"]
 size = Vector2(15, 5)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8dwan"]
+size = Vector2(20, 23)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_afa2h"]
 size = Vector2(6.5, 20.5)
 
-[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "floor_detector", "effects_detector", "internal_effects_holder")]
+[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "floor_detector", "effects_detector", "animations", "internal_effects_holder")]
 script = ExtResource("1_c6bbt")
 JUMP_VELOCITY = -600.0
 SNAP_DISTANCE = 2
+PUSH_FORCE = 20
 input = NodePath("Input")
 rollback_sync = NodePath("RollbackSynchronizer")
 collision_shape = NodePath("CollisionShape2D")
 floor_detector = NodePath("FloorDetector")
 effects_detector = NodePath("EffectsDetector")
+animations = NodePath("AnimatedSprite2D")
 internal_effects_holder = NodePath("InternalEffects")
 metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 
@@ -30,7 +35,7 @@ metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 script = ExtResource("2_3n60s")
 root = NodePath("..")
 enable_prediction = true
-state_properties = Array[String]([":position", ":velocity"])
+state_properties = Array[String]([":position", ":velocity", ":facing_right"])
 input_properties = Array[String](["Input:movement", "Input:jump"])
 metadata/_custom_type_script = "uid://d350u8evihs1u"
 
@@ -45,8 +50,8 @@ script = ExtResource("2_hs7lg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=791727306]
 sprite_frames = ExtResource("5_afa2h")
-animation = &"fall"
-frame_progress = 0.6621661
+animation = &"run"
+frame_progress = 0.8192888
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=99890407]
 position = Vector2(0, 4.5)
@@ -59,18 +64,20 @@ target_position = Vector2(0, 0)
 
 [node name="EffectsDetector" type="ShapeCast2D" parent="." unique_id=738121317]
 position = Vector2(0, 4.5)
-shape = ExtResource("6_uj5xo")
+shape = SubResource("RectangleShape2D_8dwan")
 target_position = Vector2(0, 0)
 collide_with_areas = true
 
 [node name="InternalEffects" type="Node" parent="." unique_id=2005917229]
 
-[node name="Equips" type="Node" parent="." unique_id=523913569]
+[node name="Equips" type="Node2D" parent="." unique_id=2121410820]
 
-[node name="Hand" type="Area2D" parent="Equips" unique_id=1763644857]
+[node name="Hand" type="Area2D" parent="Equips" unique_id=1763644857 node_paths=PackedStringArray("collision_shape")]
 monitoring = false
 monitorable = false
 script = ExtResource("7_afa2h")
+collision_shape = NodePath("CollisionShape2D")
+force = null
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Equips/Hand" unique_id=1348762664]
 position = Vector2(10, 5)
