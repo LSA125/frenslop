@@ -6,18 +6,16 @@
 [ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_uj5xo"]
 [ext_resource type="SpriteFrames" uid="uid://6ugma7wj5m3y" path="res://assets/shared/MaskDudeSpiteFrames.tres" id="5_afa2h"]
 [ext_resource type="Shape2D" uid="uid://dlua18bl7y8gu" path="res://assets/shared/PlayerBodyShape.tres" id="6_uj5xo"]
-[ext_resource type="Script" uid="uid://q1raen8cu66o" path="res://nodes/game/hand.gd" id="7_afa2h"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3n60s"]
-size = Vector2(15, 5)
+size = Vector2(15, 8)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8dwan"]
 size = Vector2(20, 23)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_afa2h"]
-size = Vector2(6.5, 20.5)
-
 [node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "floor_detector", "effects_detector", "animations", "internal_effects_holder")]
+collision_layer = 2
+collision_mask = 3
 script = ExtResource("1_c6bbt")
 JUMP_VELOCITY = -600.0
 SNAP_DISTANCE = 2
@@ -61,24 +59,13 @@ shape = ExtResource("6_uj5xo")
 position = Vector2(0, 17)
 shape = SubResource("RectangleShape2D_3n60s")
 target_position = Vector2(0, 0)
+collision_mask = 3
 
 [node name="EffectsDetector" type="ShapeCast2D" parent="." unique_id=738121317]
 position = Vector2(0, 4.5)
 shape = SubResource("RectangleShape2D_8dwan")
 target_position = Vector2(0, 0)
+collision_mask = 6
 collide_with_areas = true
 
 [node name="InternalEffects" type="Node" parent="." unique_id=2005917229]
-
-[node name="Equips" type="Node2D" parent="." unique_id=2121410820]
-
-[node name="Hand" type="Area2D" parent="Equips" unique_id=1763644857 node_paths=PackedStringArray("collision_shape")]
-monitoring = false
-monitorable = false
-script = ExtResource("7_afa2h")
-collision_shape = NodePath("CollisionShape2D")
-force = null
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Equips/Hand" unique_id=1348762664]
-position = Vector2(10, 5)
-shape = SubResource("RectangleShape2D_afa2h")

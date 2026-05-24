@@ -31,7 +31,6 @@ metadata/_custom_type_script = "uid://d350u8evihs1u"
 script = ExtResource("3_apexv")
 root = NodePath("..")
 properties = Array[String]([":position"])
-enable_recording = false
 metadata/_custom_type_script = "uid://dour8fehaaugp"
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=746812819]

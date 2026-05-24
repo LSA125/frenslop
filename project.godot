@@ -72,6 +72,12 @@ Drop={
 ]
 }
 
+[layer_names]
+
+2d_physics/layer_1="Environment"
+2d_physics/layer_2="Players"
+2d_physics/layer_3="Effects"
+
 [netfox]
 
 rollback/input_redundancy=6
