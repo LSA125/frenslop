@@ -12,8 +12,11 @@ var end_position := Vector2.ZERO
 var distance := 0.0
 var _velocity : Vector2 = Vector2.ZERO
 
+var processed_rollback_tick := false
+func on_tick_end(_tick):
+	processed_rollback_tick = false
 #for collisions to detect moving speed.
-func get_net_velocity() -> Vector2:
+func get_net_velocity(_delta,_tick,_is_fresh) -> Vector2:
 	return _velocity
 
 func get_platform_height() -> float:
@@ -26,14 +29,18 @@ func _ready() -> void:
 	distance = start_position.distance_to(end_position)
 	server_position = start_position
 	set_multiplayer_authority(1,true)
+	NetworkRollback.on_record_tick.connect(on_tick_end)
 	$RollbackSynchronizer.process_settings()
-	
-	
-func _rollback_tick(_delta, tick, _is_fresh) -> void:
-	var previous_position = _get_position_for_tick(tick-1)
-	global_position = _get_position_for_tick(tick)
-	_velocity = (global_position-previous_position) / NetworkTime.ticktime
-	
+
+func update(_delta, tick, _is_fresh):
+	if not processed_rollback_tick:
+		var previous_position = _get_position_for_tick(tick-1)
+		global_position = _get_position_for_tick(tick)
+		_velocity = (global_position-previous_position) / NetworkTime.ticktime
+		processed_rollback_tick = true
+
+func _rollback_tick(delta, tick, is_fresh) -> void:
+	update(delta, tick, is_fresh)
 	
 func _get_position_for_tick(tick):
 	var distance_moved = NetworkTime.ticks_to_seconds(tick) * speed

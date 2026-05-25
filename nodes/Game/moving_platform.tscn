@@ -27,12 +27,6 @@ state_properties = Array[String]([":position", ":_velocity"])
 enable_input_broadcast = false
 metadata/_custom_type_script = "uid://d350u8evihs1u"
 
-[node name="TickInterpolator" type="Node" parent="." unique_id=1818654081 node_paths=PackedStringArray("root")]
-script = ExtResource("3_apexv")
-root = NodePath("..")
-properties = Array[String]([":position"])
-metadata/_custom_type_script = "uid://dour8fehaaugp"
-
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=746812819]
 position = Vector2(38.169334, 0.08523849)
 rotation = 1.5707964
@@ -41,3 +35,9 @@ texture = SubResource("GradientTexture1D_s0nni")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=955408764]
 shape = SubResource("RectangleShape2D_aug50")
+
+[node name="TickInterpolator" type="Node" parent="." unique_id=1875259621 node_paths=PackedStringArray("root")]
+script = ExtResource("3_apexv")
+root = NodePath("..")
+properties = Array[String]([":position"])
+metadata/_custom_type_script = "uid://dour8fehaaugp"

@@ -47,12 +47,12 @@ shape = SubResource("RectangleShape2D_p57ef")
 physics_material_override = SubResource("PhysicsMaterial_s0nni")
 
 [node name="Sprite2D" type="Sprite2D" parent="Floor2" unique_id=422358787]
-position = Vector2(578.5, 600.5)
+position = Vector2(579, 603)
 scale = Vector2(1, 9.135)
 texture = SubResource("GradientTexture1D_aug50")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Floor2" unique_id=1261990294]
-position = Vector2(579, 600.5)
+position = Vector2(578, 608)
 shape = SubResource("RectangleShape2D_kiw3p")
 
 [node name="Wall" type="StaticBody2D" parent="." unique_id=526584719]

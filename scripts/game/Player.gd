@@ -40,31 +40,46 @@ var rope_vel : Dictionary = {}
 var on_platform := false
 var grounded := false
 
+var visited := false
 
+func on_tick_end(_tick):
+	visited = false
 
 func _ready() -> void:
 	await get_tree().process_frame
 	set_multiplayer_authority(1)
 	input.set_multiplayer_authority(name.to_int())
+	NetworkRollback.on_prepare_tick.connect(prepare)
+	NetworkRollback.on_record_tick.connect(on_tick_end)
 	rollback_sync.process_settings()
 
-func get_net_velocity() -> Vector2:
+func get_net_velocity(delta:float,tick:int,is_fresh:bool) -> Vector2:
+	if not visited:
+		update(delta,tick,is_fresh)
 	return velocity + floor_vel
 	
+func update(delta:float, tick:int, is_fresh:bool):
+	if not visited:
+		if tmp != position:
+			print("tmp != position (rollback updated)")
+		apply_equip(delta, tick)
+		apply_continuous_forces(delta)
+		apply_impulse_forces(delta)
+		apply_movement(delta, tick, is_fresh)
+		visited = true
+
 func get_platform_height() -> float:
 	return global_position.y - collision_shape.shape.size.y/2
-	
-func _rollback_tick(delta: float, tick, _is_fresh) -> void:
-	prepare()
-	apply_equip(delta, tick)
-	apply_continuous_forces(delta)
-	apply_impulse_forces(delta)
-	apply_movement(delta)
 
+func _rollback_tick(delta: float, tick:int, _is_fresh:bool) -> void:
+	update(delta,tick,_is_fresh)
+
+var tmp
 func _process(delta: float) -> void:
 	apply_animations()
 
-func prepare():
+func prepare(_tick):
+	tmp = position
 	effects_detector.force_shapecast_update()
 	floor_detector.force_shapecast_update()
 	continuous_velocity = Vector2.ZERO
@@ -102,8 +117,8 @@ func apply_impulse_forces(delta: float) -> void:
 					continuous_velocity += force
 	return
 
-func apply_movement(delta: float) -> void:
-	update_platform_info()
+func apply_movement(delta, tick, is_fresh) -> void:
+	update_platform_info(delta, tick, is_fresh)
 	grounded = check_is_grounded()
 	
 	if not grounded:
@@ -174,15 +189,15 @@ func check_is_grounded() -> bool:
 			return true
 	return false
 
-func update_platform_info() -> void:
+func update_platform_info(delta, tick, is_fresh) -> void:
 	floor_vel = Vector2.ZERO
 	on_platform = false
 	if floor_detector.is_colliding():
 			for i in floor_detector.get_collision_count():
 				var collider := floor_detector.get_collider(i)
-				if collider.has_method("get_net_velocity"):
+				if collider.has_method("get_net_velocity") and collider.global_position.y > global_position.y:
 					if floor_detector.get_collision_normal(i).dot(Vector2.UP) > 0.7:
-						floor_vel = collider.get_net_velocity()
+						floor_vel = collider.get_net_velocity(delta, tick, is_fresh)
 						on_platform = true
 						break
 
