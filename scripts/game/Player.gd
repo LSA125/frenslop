@@ -13,7 +13,7 @@ class_name Player
 @export var input: PlayerInput
 @export var rollback_sync : RollbackSynchronizer
 @export var collision_shape : CollisionShape2D
-@export var floor_detector : ShapeCast2D
+@export var ride_detector : ShapeCast2D
 @export var effects_detector : ShapeCast2D
 @export var animations : AnimatedSprite2D
 @export var internal_effects_holder : Node
@@ -40,48 +40,33 @@ var rope_vel : Dictionary = {}
 var on_platform := false
 var grounded := false
 
-var visited := false
 
-func on_tick_end(_tick):
-	visited = false
 
 func _ready() -> void:
 	await get_tree().process_frame
 	set_multiplayer_authority(1)
 	input.set_multiplayer_authority(name.to_int())
-	NetworkRollback.on_prepare_tick.connect(prepare)
-	NetworkRollback.on_record_tick.connect(on_tick_end)
+	NetworkRollback.after_prepare_tick.connect(prepare)
 	rollback_sync.process_settings()
 
-func get_net_velocity(delta:float,tick:int,is_fresh:bool) -> Vector2:
-	if not visited:
-		update(delta,tick,is_fresh)
+func get_net_velocity() -> Vector2:
 	return velocity + floor_vel
 	
-func update(delta:float, tick:int, is_fresh:bool):
-	if not visited:
-		if tmp != position:
-			print("tmp != position (rollback updated)")
-		apply_equip(delta, tick)
-		apply_continuous_forces(delta)
-		apply_impulse_forces(delta)
-		apply_movement(delta, tick, is_fresh)
-		visited = true
-
 func get_platform_height() -> float:
-	return global_position.y - collision_shape.shape.size.y/2
+	return collision_shape.global_position.y - collision_shape.shape.size.y / 2.0
 
-func _rollback_tick(delta: float, tick:int, _is_fresh:bool) -> void:
-	update(delta,tick,_is_fresh)
+func _rollback_tick(delta: float, tick, _is_fresh) -> void:
+	apply_equip(delta, tick)
+	apply_continuous_forces(delta)
+	apply_impulse_forces(delta)
+	apply_movement(delta)
 
-var tmp
 func _process(delta: float) -> void:
 	apply_animations()
 
 func prepare(_tick):
-	tmp = position
 	effects_detector.force_shapecast_update()
-	floor_detector.force_shapecast_update()
+	ride_detector.force_shapecast_update()
 	continuous_velocity = Vector2.ZERO
 
 func apply_equip(delta, tick) -> void:
@@ -117,8 +102,7 @@ func apply_impulse_forces(delta: float) -> void:
 					continuous_velocity += force
 	return
 
-func apply_movement(delta, tick, is_fresh) -> void:
-	update_platform_info(delta, tick, is_fresh)
+func apply_movement(delta: float) -> void:
 	grounded = check_is_grounded()
 	
 	if not grounded:
@@ -142,12 +126,34 @@ func apply_movement(delta, tick, is_fresh) -> void:
 	velocity += continuous_velocity
 	velocity += floor_vel
 	velocity *= NetworkTime.physics_factor
+	var before_pos := global_position
 	move_and_slide()
 	velocity /= NetworkTime.physics_factor
 	velocity -= floor_vel
 	velocity -= continuous_velocity
-	if on_platform:
-		snap_to_platform()
+	var riding_bodies := collect_riding_bodies()
+	update_riding_bodies(global_position - before_pos, riding_bodies)
+
+func collect_riding_bodies() -> Array[Player]:
+	var bodies: Array[Player] = []
+	for i in ride_detector.get_collision_count():
+		var collider := ride_detector.get_collider(i) as Player
+		if ride_detector.get_collision_normal(i).dot(Vector2.DOWN) > 0.7:
+			bodies.append(collider)
+	return bodies
+
+func update_riding_bodies(position_offset: Vector2, riding_bodies: Array[Player]) -> void:
+	for collider in riding_bodies:
+		var player := collider as Player
+		player.velocity = Vector2.ZERO
+		player.apply_position_offset(position_offset)
+		if player.velocity.y > 0:
+			player.velocity.y = 0
+
+func apply_position_offset(offset : Vector2) -> void:
+	position += offset
+	var riding_bodies := collect_riding_bodies()
+	update_riding_bodies(offset, riding_bodies)
 
 func apply_animations() -> void:
 		
@@ -181,30 +187,8 @@ func face_direction(right : bool) -> void:
 		animations.flip_h = true
 # Deterministic replacement for is_on_floor()
 func check_is_grounded() -> bool:
-	# If the platform manager explicitly snapped us down this frame, we are grounded
 	var collision := KinematicCollision2D.new()
-	#Test for a collision 
 	if test_move(global_transform, Vector2.DOWN * (SNAP_DISTANCE + 1), collision):
 		if collision.get_normal().dot(Vector2.UP) > 0.7:
 			return true
 	return false
-
-func update_platform_info(delta, tick, is_fresh) -> void:
-	floor_vel = Vector2.ZERO
-	on_platform = false
-	if floor_detector.is_colliding():
-			for i in floor_detector.get_collision_count():
-				var collider := floor_detector.get_collider(i)
-				if collider.has_method("get_net_velocity") and collider.global_position.y > global_position.y:
-					if floor_detector.get_collision_normal(i).dot(Vector2.UP) > 0.7:
-						floor_vel = collider.get_net_velocity(delta, tick, is_fresh)
-						on_platform = true
-						break
-
-func snap_to_platform() -> void:
-	if not floor_detector.is_colliding(): return
-	
-	var collider = floor_detector.get_collider(0)
-	if collider.has_method("get_platform_height"):
-		var bottom : float = global_position.y + collision_shape.shape.size.y / 2
-		global_position.y -= bottom - collider.get_platform_height() + SNAP_DISTANCE

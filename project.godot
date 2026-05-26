@@ -80,9 +80,9 @@ Drop={
 
 [netfox]
 
+time/max_ticks_per_frame=8
+time/tickrate=50
 rollback/input_redundancy=6
-time/max_ticks_per_frame=24
-time/tickrate=30
 rollback/input_delay=4
 
 [physics]

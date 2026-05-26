@@ -1,31 +1,36 @@
 [gd_scene format=3 uid="uid://dxdilstx04hyq"]
 
 [ext_resource type="Script" uid="uid://dogee3fjy71wn" path="res://scripts/game/MovingPlatform.gd" id="1_qjc1e"]
-[ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_muv2c"]
 [ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="3_apexv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_aug50"]
+size = Vector2(76, 20)
 
 [sub_resource type="Gradient" id="Gradient_78awf"]
 
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_s0nni"]
 gradient = SubResource("Gradient_78awf")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_aug50"]
-size = Vector2(76, 20)
-
-[node name="MovingPlatform" type="AnimatableBody2D" unique_id=461333593 node_paths=PackedStringArray("collision_shape")]
+[node name="MovingPlatform" type="AnimatableBody2D" unique_id=461333593 node_paths=PackedStringArray("collision_shape", "ride_detector")]
 sync_to_physics = false
 script = ExtResource("1_qjc1e")
 distance_y = -200
 distance_x = 0
 collision_shape = NodePath("CollisionShape2D")
+ride_detector = NodePath("RideDetector")
 metadata/_custom_type_script = "uid://b1u335fltss66"
 
-[node name="RollbackSynchronizer" type="Node" parent="." unique_id=2057454948 node_paths=PackedStringArray("root")]
-script = ExtResource("2_muv2c")
+[node name="RideDetector" type="ShapeCast2D" parent="." unique_id=441451099]
+position = Vector2(0, -10)
+shape = SubResource("RectangleShape2D_aug50")
+target_position = Vector2(0, 0)
+collision_mask = 2
+
+[node name="TickInterpolator" type="Node" parent="." unique_id=1818654081 node_paths=PackedStringArray("root")]
+script = ExtResource("3_apexv")
 root = NodePath("..")
-state_properties = Array[String]([":position", ":_velocity"])
-enable_input_broadcast = false
-metadata/_custom_type_script = "uid://d350u8evihs1u"
+properties = Array[String]([":position"])
+metadata/_custom_type_script = "uid://dour8fehaaugp"
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=746812819]
 position = Vector2(38.169334, 0.08523849)
@@ -35,9 +40,3 @@ texture = SubResource("GradientTexture1D_s0nni")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=955408764]
 shape = SubResource("RectangleShape2D_aug50")
-
-[node name="TickInterpolator" type="Node" parent="." unique_id=1875259621 node_paths=PackedStringArray("root")]
-script = ExtResource("3_apexv")
-root = NodePath("..")
-properties = Array[String]([":position"])
-metadata/_custom_type_script = "uid://dour8fehaaugp"
