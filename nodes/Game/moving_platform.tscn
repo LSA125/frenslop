@@ -21,7 +21,7 @@ ride_detector = NodePath("RideDetector")
 metadata/_custom_type_script = "uid://b1u335fltss66"
 
 [node name="RideDetector" type="ShapeCast2D" parent="." unique_id=441451099]
-position = Vector2(0, -10)
+position = Vector2(0, -6)
 shape = SubResource("RectangleShape2D_aug50")
 target_position = Vector2(0, 0)
 collision_mask = 2

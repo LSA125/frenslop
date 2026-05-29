@@ -86,6 +86,7 @@ distance_x = 200
 
 [node name="MovingPlatform3" parent="." unique_id=1248796923 instance=ExtResource("3_cpr0p")]
 position = Vector2(300, 551)
+speed = 150
 distance_x = 200
 
 [node name="BouncingBall" parent="." unique_id=934173636 instance=ExtResource("5_s0nni")]

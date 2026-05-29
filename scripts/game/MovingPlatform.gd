@@ -11,7 +11,6 @@ class_name MovingPlatform
 var start_position := Vector2.ZERO
 var end_position := Vector2.ZERO
 var distance := 0.0
-var _velocity : Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	await get_tree().process_frame
@@ -25,16 +24,13 @@ func _ready() -> void:
 	
 func update(tick) -> void:
 	ride_detector.force_shapecast_update()
-	var previous_position = _get_position_for_tick(tick-1)
-	global_position = _get_position_for_tick(tick)
-	_velocity = (global_position-previous_position) / NetworkTime.ticktime
+	var previous_position = _get_position_for_tick(tick+6)
+	global_position = _get_position_for_tick(tick+7)
 	for i in ride_detector.get_collision_count():
 		var player := ride_detector.get_collider(i) as Player
 		if ride_detector.get_collision_normal(i).dot(Vector2.DOWN) > 0.7:
-			if player.velocity.y > 0:
-				player.velocity.y = 0
 			player.apply_position_offset(global_position - previous_position)
-	
+
 func _get_position_for_tick(tick):
 	var distance_moved = NetworkTime.ticks_to_seconds(tick) * speed
 	var progress = distance_moved / distance

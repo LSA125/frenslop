@@ -3,11 +3,12 @@ class_name Player
 @export_group("Player Control")
 @export var SPEED := 300.0
 @export var JUMP_VELOCITY := -400.0
-#gap between the snapped position and the platform
-@export var SNAP_DISTANCE := 1
 #the velocity a player can push another
 @export var PUSH_FORCE := 200
+#number of pixels above head to snap riding player
+@export var SNAP_OFFSET : float = 0
 @export var facing_right := true
+
 
 @export_group("Imports") 
 @export var input: PlayerInput
@@ -40,7 +41,8 @@ var rope_vel : Dictionary = {}
 var on_platform := false
 var grounded := false
 
-
+var riding_bodies : Array[Player] = []
+var is_riding := false
 
 func _ready() -> void:
 	await get_tree().process_frame
@@ -49,16 +51,10 @@ func _ready() -> void:
 	NetworkRollback.after_prepare_tick.connect(prepare)
 	rollback_sync.process_settings()
 
-func get_net_velocity() -> Vector2:
-	return velocity + floor_vel
-	
-func get_platform_height() -> float:
-	return collision_shape.global_position.y - collision_shape.shape.size.y / 2.0
-
 func _rollback_tick(delta: float, tick, _is_fresh) -> void:
 	apply_equip(delta, tick)
-	apply_continuous_forces(delta)
-	apply_impulse_forces(delta)
+	apply_continuous_forces()
+	apply_impulse_forces()
 	apply_movement(delta)
 
 func _process(delta: float) -> void:
@@ -67,21 +63,25 @@ func _process(delta: float) -> void:
 func prepare(_tick):
 	effects_detector.force_shapecast_update()
 	ride_detector.force_shapecast_update()
+	riding_bodies = collect_riding_bodies()
 	continuous_velocity = Vector2.ZERO
+	is_riding = false
 
 func apply_equip(delta, tick) -> void:
 	if input.action:
 		if active_equip:
 			return
 
-func apply_continuous_forces(delta: float) -> void:
+func apply_continuous_forces() -> void:
 	for child in internal_effects_holder.get_children():
 		if child.has_method("apply_velocity"):
 			continuous_velocity += child.apply_velocity(self)
 		else:
 			print("Child does not have apply_velocity method")
 #all bombs/explosions/springs. Any effect that would be an area2d
-func apply_impulse_forces(delta: float) -> void:
+#also player just cause its easy, i probably should have named this external
+#and internal forces...
+func apply_impulse_forces() -> void:
 	if effects_detector.is_colliding():
 		for i in effects_detector.get_collision_count():
 			var collider := effects_detector.get_collider(i)
@@ -131,29 +131,27 @@ func apply_movement(delta: float) -> void:
 	velocity /= NetworkTime.physics_factor
 	velocity -= floor_vel
 	velocity -= continuous_velocity
-	var riding_bodies := collect_riding_bodies()
-	update_riding_bodies(global_position - before_pos, riding_bodies)
+	update_riding_bodies(global_position - before_pos)
 
 func collect_riding_bodies() -> Array[Player]:
 	var bodies: Array[Player] = []
 	for i in ride_detector.get_collision_count():
-		var collider := ride_detector.get_collider(i) as Player
+		var player := ride_detector.get_collider(i) as Player
 		if ride_detector.get_collision_normal(i).dot(Vector2.DOWN) > 0.7:
-			bodies.append(collider)
+			player.is_riding = true
+			bodies.append(player)
 	return bodies
 
-func update_riding_bodies(position_offset: Vector2, riding_bodies: Array[Player]) -> void:
+func update_riding_bodies(position_offset: Vector2) -> void:
 	for collider in riding_bodies:
 		var player := collider as Player
-		player.velocity = Vector2.ZERO
 		player.apply_position_offset(position_offset)
-		if player.velocity.y > 0:
-			player.velocity.y = 0
 
 func apply_position_offset(offset : Vector2) -> void:
+	var original = position
 	position += offset
-	var riding_bodies := collect_riding_bodies()
-	update_riding_bodies(offset, riding_bodies)
+	apply_floor_snap()
+	update_riding_bodies(position-original)
 
 func apply_animations() -> void:
 		
@@ -161,7 +159,7 @@ func apply_animations() -> void:
 	
 	if input.action:
 		animations.play(&"wall_jump")
-	if grounded:
+	if grounded or on_platform:
 		if absf(input.movement) < 0.01:
 			animations.play(&"idle")
 		elif impulse_velocity.length() > 1000:
@@ -177,9 +175,6 @@ func apply_animations() -> void:
 			animations.play(&"spin")
 		else:
 			animations.play(&"idle")
-		
-		
-		
 func face_direction(right : bool) -> void:
 	if right:
 		animations.flip_h = false
@@ -188,7 +183,7 @@ func face_direction(right : bool) -> void:
 # Deterministic replacement for is_on_floor()
 func check_is_grounded() -> bool:
 	var collision := KinematicCollision2D.new()
-	if test_move(global_transform, Vector2.DOWN * (SNAP_DISTANCE + 1), collision):
+	if test_move(global_transform, Vector2.DOWN, collision):
 		if collision.get_normal().dot(Vector2.UP) > 0.7:
 			return true
 	return false
