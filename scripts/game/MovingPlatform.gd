@@ -29,7 +29,7 @@ func update(tick) -> void:
 	for i in ride_detector.get_collision_count():
 		var player := ride_detector.get_collider(i) as Player
 		if ride_detector.get_collision_normal(i).dot(Vector2.DOWN) > 0.7:
-			player.apply_position_offset(global_position - previous_position)
+			player.apply_position_offset(global_position - previous_position, tick)
 
 func _get_position_for_tick(tick):
 	var distance_moved = NetworkTime.ticks_to_seconds(tick) * speed

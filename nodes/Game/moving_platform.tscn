@@ -14,10 +14,13 @@ gradient = SubResource("Gradient_78awf")
 [node name="MovingPlatform" type="AnimatableBody2D" unique_id=461333593 node_paths=PackedStringArray("collision_shape", "ride_detector")]
 sync_to_physics = false
 script = ExtResource("1_qjc1e")
+speed = null
 distance_y = -200
 distance_x = 0
+server_position = null
 collision_shape = NodePath("CollisionShape2D")
 ride_detector = NodePath("RideDetector")
+body_skin = null
 metadata/_custom_type_script = "uid://b1u335fltss66"
 
 [node name="RideDetector" type="ShapeCast2D" parent="." unique_id=441451099]

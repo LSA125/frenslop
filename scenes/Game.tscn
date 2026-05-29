@@ -98,3 +98,6 @@ position = Vector2(427, 95)
 [node name="RapierDriver2D" type="Node" parent="." unique_id=1617102161]
 script = ExtResource("5_aug50")
 metadata/_custom_type_script = "uid://bcc28dvk0pufe"
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1837493940]
+position = Vector2(565, 308)

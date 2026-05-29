@@ -48,14 +48,14 @@ func _ready() -> void:
 	await get_tree().process_frame
 	set_multiplayer_authority(1)
 	input.set_multiplayer_authority(name.to_int())
-	NetworkRollback.after_prepare_tick.connect(prepare)
+	NetworkRollback.on_prepare_tick.connect(prepare)
 	rollback_sync.process_settings()
 
 func _rollback_tick(delta: float, tick, _is_fresh) -> void:
 	apply_equip(delta, tick)
 	apply_continuous_forces()
 	apply_impulse_forces()
-	apply_movement(delta)
+	apply_movement(delta, tick)
 
 func _process(delta: float) -> void:
 	apply_animations()
@@ -88,6 +88,10 @@ func apply_impulse_forces() -> void:
 			if collider.has_method("apply_velocity"):
 				impulse_velocity += collider.apply_velocity(self)
 			if collider is Player:
+				# Don't let riding players push carriers downward
+				if is_riding:
+					continue
+				
 				#we are pushing the other player(lets not do bouncing off eachother yet...):
 				var my_push_force := PUSH_FORCE * input.movement
 				var other_push_force:float = collider.PUSH_FORCE * collider.input.movement
@@ -102,14 +106,19 @@ func apply_impulse_forces() -> void:
 					continuous_velocity += force
 	return
 
-func apply_movement(delta: float) -> void:
+func apply_movement(delta: float, tick) -> void:
 	grounded = check_is_grounded()
 	
-	if not grounded:
-		velocity += get_gravity() * delta
-	elif input.jump:
-		velocity.y = JUMP_VELOCITY
-		on_platform = false
+	# Riding players should never apply gravity or fall
+	if is_riding:
+		print("I am riding")
+		velocity.y = 0
+	else:
+		if not grounded:
+			velocity += get_gravity() * delta
+		elif input.jump:
+			velocity.y = JUMP_VELOCITY
+			on_platform = false
 
 	var direction_x: float = input.movement
 	if direction_x:
@@ -131,27 +140,27 @@ func apply_movement(delta: float) -> void:
 	velocity /= NetworkTime.physics_factor
 	velocity -= floor_vel
 	velocity -= continuous_velocity
-	update_riding_bodies(global_position - before_pos)
+	update_riding_bodies(global_position - before_pos, tick)
 
 func collect_riding_bodies() -> Array[Player]:
 	var bodies: Array[Player] = []
 	for i in ride_detector.get_collision_count():
 		var player := ride_detector.get_collider(i) as Player
 		if ride_detector.get_collision_normal(i).dot(Vector2.DOWN) > 0.7:
+			print("I found: ", player.name)
 			player.is_riding = true
 			bodies.append(player)
 	return bodies
 
-func update_riding_bodies(position_offset: Vector2) -> void:
+func update_riding_bodies(position_offset: Vector2, tick) -> void:
 	for collider in riding_bodies:
 		var player := collider as Player
-		player.apply_position_offset(position_offset)
+		player.apply_position_offset(position_offset, tick)
 
-func apply_position_offset(offset : Vector2) -> void:
-	var original = position
+func apply_position_offset(offset : Vector2, tick) -> void:
 	position += offset
-	apply_floor_snap()
-	update_riding_bodies(position-original)
+	velocity.y = 0
+	update_riding_bodies(offset,tick)
 
 func apply_animations() -> void:
 		

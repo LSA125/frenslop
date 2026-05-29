@@ -15,7 +15,6 @@ size = Vector2(20, 23)
 
 [node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "ride_detector", "effects_detector", "animations", "internal_effects_holder")]
 collision_layer = 2
-collision_mask = 3
 floor_snap_length = 3.1
 platform_on_leave = 2
 platform_floor_layers = 4294901760
@@ -35,7 +34,7 @@ metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 script = ExtResource("2_3n60s")
 root = NodePath("..")
 enable_prediction = true
-state_properties = Array[String]([":position", ":velocity", ":facing_right"])
+state_properties = Array[String]([":position", ":facing_right", ":velocity"])
 input_properties = Array[String](["Input:movement", "Input:jump"])
 metadata/_custom_type_script = "uid://d350u8evihs1u"
 
