@@ -81,9 +81,9 @@ Drop={
 [netfox]
 
 time/max_ticks_per_frame=24
-time/tickrate=24
+time/tickrate=30
 rollback/input_redundancy=6
-rollback/input_delay=0
+rollback/input_delay=3
 extras/auto_tile_windows=true
 
 [physics]

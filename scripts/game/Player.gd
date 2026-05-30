@@ -112,16 +112,13 @@ func apply_impulse_forces() -> void:
 
 func apply_movement(delta: float, tick) -> void:
 	grounded = check_is_grounded()
-	
-	# Riding players should never apply gravity or fall
-	if is_riding:
-		velocity.y = 0
+	if not grounded and not is_riding:
+		velocity += get_gravity() * delta
+	elif input.jump:
+		velocity.y = JUMP_VELOCITY
+		on_platform = false
 	else:
-		if not grounded:
-			velocity += get_gravity() * delta
-		elif input.jump:
-			velocity.y = JUMP_VELOCITY
-			on_platform = false
+		velocity.y = 0
 
 	var direction_x: float = input.movement
 	if direction_x:
@@ -160,13 +157,15 @@ func collect_riding_bodies() -> Array[Player]:
 func update_riding_bodies(position_offset: Vector2, tick) -> void:
 	for collider in riding_bodies:
 		var player := collider as Player
-		player.apply_position_offset(position_offset, tick)
+		if player:
+			player.apply_position_offset(position_offset, tick)
 
 func apply_position_offset(offset : Vector2, tick) -> void:
+	if offset.is_zero_approx():
+		return
 	position += offset
-	velocity.y = 0
-	NetworkRollback.mutate(self, tick)
 	update_riding_bodies(offset,tick)
+	
 
 func apply_animations() -> void:
 		
@@ -197,8 +196,12 @@ func face_direction(right : bool) -> void:
 		animations.flip_h = true
 # Deterministic replacement for is_on_floor()
 func check_is_grounded() -> bool:
-	var collision := KinematicCollision2D.new()
-	if test_move(global_transform, Vector2.DOWN, collision):
-		if collision.get_normal().dot(Vector2.UP) > 0.7:
-			return true
-	return false
+	#var collision := KinematicCollision2D.new()
+	#if test_move(global_transform, Vector2.DOWN, collision):
+		#if collision.get_normal().dot(Vector2.UP) > 0.7:
+			#return true
+	var tmp := velocity
+	velocity = Vector2.ZERO
+	move_and_slide()
+	velocity = tmp
+	return is_on_floor()
