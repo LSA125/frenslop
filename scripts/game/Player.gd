@@ -49,6 +49,7 @@ func _ready() -> void:
 	set_multiplayer_authority(1)
 	input.set_multiplayer_authority(name.to_int())
 	NetworkRollback.on_prepare_tick.connect(prepare)
+	NetworkRollback.after_prepare_tick.connect(after_prepare)
 	rollback_sync.process_settings()
 
 func _rollback_tick(delta: float, tick, _is_fresh) -> void:
@@ -61,11 +62,14 @@ func _process(delta: float) -> void:
 	apply_animations()
 
 func prepare(_tick):
+	continuous_velocity = Vector2.ZERO
+	is_riding = false
+	riding_bodies.clear()
+
+func after_prepare(_tick):
 	effects_detector.force_shapecast_update()
 	ride_detector.force_shapecast_update()
 	riding_bodies = collect_riding_bodies()
-	continuous_velocity = Vector2.ZERO
-	is_riding = false
 
 func apply_equip(delta, tick) -> void:
 	if input.action:
@@ -111,7 +115,6 @@ func apply_movement(delta: float, tick) -> void:
 	
 	# Riding players should never apply gravity or fall
 	if is_riding:
-		print("I am riding")
 		velocity.y = 0
 	else:
 		if not grounded:
@@ -146,8 +149,10 @@ func collect_riding_bodies() -> Array[Player]:
 	var bodies: Array[Player] = []
 	for i in ride_detector.get_collision_count():
 		var player := ride_detector.get_collider(i) as Player
+		#make sure its a player that is on top of us
+		if not player:
+			continue
 		if ride_detector.get_collision_normal(i).dot(Vector2.DOWN) > 0.7:
-			print("I found: ", player.name)
 			player.is_riding = true
 			bodies.append(player)
 	return bodies
@@ -160,6 +165,7 @@ func update_riding_bodies(position_offset: Vector2, tick) -> void:
 func apply_position_offset(offset : Vector2, tick) -> void:
 	position += offset
 	velocity.y = 0
+	NetworkRollback.mutate(self, tick)
 	update_riding_bodies(offset,tick)
 
 func apply_animations() -> void:
