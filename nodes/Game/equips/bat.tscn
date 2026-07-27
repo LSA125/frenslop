@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://dydj3hnrba7lf" path="res://scripts/game/equips/bat.gd" id="1_3kwxk"]
 [ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_3kwxk"]
 [ext_resource type="Texture2D" uid="uid://bup27c1wj0von" path="res://assets/Bat.png" id="3_deopo"]
+[ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="4_wydut"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_rqrk7"]
 
@@ -81,7 +82,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_tdl20")
 }],
-"loop": true,
+"loop": 1,
 "name": &"charge",
 "speed": 15.0
 }, {
@@ -89,7 +90,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_oar4m")
 }],
-"loop": true,
+"loop": 1,
 "name": &"highlight",
 "speed": 5.0
 }, {
@@ -100,7 +101,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_kc5ll")
 }],
-"loop": true,
+"loop": 1,
 "name": &"hit",
 "speed": 5.0
 }, {
@@ -108,7 +109,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_rd1x8")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle",
 "speed": 5.0
 }]
@@ -119,15 +120,17 @@ size = Vector2(8, 30)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0uoen"]
 size = Vector2(28.5, 25)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_rqrk7"]
-size = Vector2(8, 4)
-
-[node name="Bat" type="Node2D" unique_id=2140782126]
+[node name="Bat" type="Node2D" unique_id=2140782126 node_paths=PackedStringArray("pick_up_collider", "floor_detector", "rollback_synchronizer")]
 script = ExtResource("1_3kwxk")
+pick_up_collider = NodePath("PickupArea/CollisionShape2D")
+floor_detector = NodePath("FloorCast")
+rollback_synchronizer = NodePath("RollbackSynchronizer")
+FALL_SPEED = 50
 
 [node name="RollbackSynchronizer" type="Node" parent="." unique_id=473621981 node_paths=PackedStringArray("root")]
 script = ExtResource("2_3kwxk")
 root = NodePath("..")
+state_properties = Array[String]([":velocity", ":sleep", ":position"])
 metadata/_custom_type_script = "uid://d350u8evihs1u"
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=214428867]
@@ -147,6 +150,12 @@ position = Vector2(8.75, -1.5)
 shape = SubResource("RectangleShape2D_0uoen")
 
 [node name="FloorCast" type="ShapeCast2D" parent="." unique_id=1160021394]
-position = Vector2(0, 13)
-shape = SubResource("RectangleShape2D_rqrk7")
+enabled = false
+shape = SubResource("RectangleShape2D_deopo")
 target_position = Vector2(0, 0)
+
+[node name="TickInterpolator" type="Node" parent="." unique_id=1264043967 node_paths=PackedStringArray("root")]
+script = ExtResource("4_wydut")
+root = NodePath("..")
+properties = Array[String]([":position"])
+metadata/_custom_type_script = "uid://dour8fehaaugp"

@@ -22,9 +22,10 @@ func add_player_card(player: Dictionary) -> void:
 
 func _on_ready_button_pressed() -> void:
 	if multiplayer.is_server():
-		var card = get_node(str(MultiplayerManager.local_player["id"]))
-		card.update_ready_state(not card.is_ready)
-		_on_ready_changed()
+		var player_id: int = MultiplayerManager.local_player["id"]
+		var card = get_node_or_null(str(player_id))
+		if card != null:
+			sync_ready_state.rpc(player_id, not card.is_ready)
 	else:
 		rpc_id(1, "server_toggle_ready", MultiplayerManager.local_player["id"])
 
@@ -33,8 +34,18 @@ func server_toggle_ready(player_id: int) -> void:
 	if not multiplayer.is_server():
 		return
 
-	var card = get_node(str(player_id))
-	card.update_ready_state(not card.is_ready)
+	if multiplayer.get_remote_sender_id() != player_id:
+		return
+
+	var card = get_node_or_null(str(player_id))
+	if card != null:
+		sync_ready_state.rpc(player_id, not card.is_ready)
+
+@rpc("authority", "call_local", "reliable")
+func sync_ready_state(player_id: int, is_ready: bool) -> void:
+	var card = get_node_or_null(str(player_id))
+	if card != null:
+		card.update_ready_state(is_ready)
 
 func on_player_list_changed() -> void:
 	var current_ids := {}

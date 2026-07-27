@@ -5,7 +5,6 @@
 [ext_resource type="PackedScene" uid="uid://dxdilstx04hyq" path="res://nodes/game/moving_platform.tscn" id="3_cpr0p"]
 [ext_resource type="Script" uid="uid://bcc28dvk0pufe" path="res://addons/netfox.extras/physics/rapier_driver_2d.gd" id="5_aug50"]
 [ext_resource type="PackedScene" uid="uid://da56g8aro0wvx" path="res://nodes/game/bouncing_ball.tscn" id="5_s0nni"]
-[ext_resource type="PackedScene" uid="uid://c1g1ccixgsdf2" path="res://nodes/game/equips/bat.tscn" id="6_aug50"]
 
 [sub_resource type="Gradient" id="Gradient_lbhrr"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
@@ -93,13 +92,12 @@ distance_x = 200
 [node name="BouncingBall" parent="." unique_id=934173636 instance=ExtResource("5_s0nni")]
 position = Vector2(823, 302)
 
+[node name="BouncingBall2" parent="." unique_id=1634551022 instance=ExtResource("5_s0nni")]
+position = Vector2(427, 95)
+
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1837493940]
 position = Vector2(572, 446)
 
-[node name="RapierDriver2D" type="Node" parent="." unique_id=1835466796]
+[node name="RapierDriver2D" type="Node" parent="." unique_id=1554402319]
 script = ExtResource("5_aug50")
-rollback_physics_space = false
 metadata/_custom_type_script = "uid://bcc28dvk0pufe"
-
-[node name="Bat" parent="." unique_id=2140782126 instance=ExtResource("6_aug50")]
-position = Vector2(143, 176)

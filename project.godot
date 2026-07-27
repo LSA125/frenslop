@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Frenslop"
 run/main_scene="uid://dp7hofscn4rvi"
-config/features=PackedStringArray("4.6", "Forward Plus")
+config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
@@ -25,10 +25,6 @@ NetworkEvents="*uid://bdmobxxptryj0"
 NetworkPerformance="*uid://cqgf7aqmjfoa3"
 WindowTiler="*uid://cmqjajhjgffm1"
 NetworkSimulator="*uid://1y2ey1e6qjwr"
-
-[dotnet]
-
-project/assembly_name="Frenslop"
 
 [editor_plugins]
 
@@ -82,12 +78,16 @@ Drop={
 
 time/max_ticks_per_frame=24
 time/tickrate=30
-rollback/input_redundancy=6
-rollback/input_delay=3
 extras/auto_tile_windows=true
+time/sync_to_physics=true
+rollback/input_redundancy=6
+rollback/enable_diff_states=false
+rollback/input_delay=2
 
 [physics]
 
+common/physics_ticks_per_second=30
+common/max_physics_steps_per_frame=24
 2d/physics_engine="Rapier2D"
 3d/physics_engine="Jolt Physics"
 rapier/solver/preset=1

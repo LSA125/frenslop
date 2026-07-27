@@ -1,0 +1,92 @@
+extends Node2D
+
+const BALL_SCENE := preload("res://nodes/game/bouncing_ball.tscn")
+const TEST_TICKS := 240
+
+var finished := false
+
+func _ready() -> void:
+	get_tree().create_timer(5.0).timeout.connect(on_watchdog_timeout)
+	if not NetworkTime.is_initial_sync_done():
+		var start_error := await NetworkTime.start()
+		if start_error != OK:
+			push_error("RAPIER_COLLISION_REGRESSION: failed to initialize NetworkTime")
+			finished = true
+			get_tree().quit(1)
+			return
+	NetworkTime.stop()
+
+	var floor_body := StaticBody2D.new()
+	floor_body.position = Vector2(300.0, 400.0)
+	var floor_shape := CollisionShape2D.new()
+	var floor_rectangle := RectangleShape2D.new()
+	floor_rectangle.size = Vector2(500.0, 20.0)
+	floor_shape.shape = floor_rectangle
+	floor_body.add_child(floor_shape)
+	add_child(floor_body)
+
+	var ball_instance := BALL_SCENE.instantiate()
+	var ball := ball_instance as BouncingBall
+	if not ball:
+		push_error("RAPIER_COLLISION_REGRESSION: failed to instantiate BouncingBall")
+		ball_instance.queue_free()
+		finished = true
+		get_tree().quit(1)
+		return
+	ball.position = Vector2(300.0, 100.0)
+	if "--no-bounce" in OS.get_cmdline_user_args():
+		ball.bounce_speed = 0.0
+	add_child(ball)
+
+	var use_manual_driver := "--manual-driver" in OS.get_cmdline_user_args()
+	var driver: RapierDriver2D
+
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if use_manual_driver:
+		await get_tree().physics_frame
+		driver = RapierDriver2D.new()
+		driver.rollback_physics_space = true
+		add_child(driver)
+		floor_body.force_update_transform()
+		ball.force_update_transform()
+		RapierPhysicsServer2D.space_flush_queries(driver.physics_space)
+
+	var greatest_y := ball.global_position.y
+	var logged_contact := false
+	for tick in range(TEST_TICKS):
+		if use_manual_driver:
+			driver.before_tick(NetworkTime.ticktime, tick)
+			if not logged_contact and ball.direct_state.get_contact_count() > 0:
+				logged_contact = true
+				print(
+					"RAPIER_COLLISION_CONTACT: normal=%s velocity=%s" %
+						[
+							ball.direct_state.get_contact_local_normal(0),
+							ball.direct_state.linear_velocity,
+						]
+				)
+		else:
+			await get_tree().physics_frame
+		greatest_y = maxf(greatest_y, ball.global_position.y)
+
+	var floor_bottom_limit := floor_body.global_position.y + 30.0
+	if greatest_y > floor_bottom_limit:
+		push_error(
+			"RAPIER_COLLISION_REGRESSION: ball passed through floor (max y %.3f)" %
+				greatest_y
+		)
+		finished = true
+		get_tree().quit(1)
+		return
+
+	var mode := "manual driver" if use_manual_driver else "engine stepping"
+	print("RAPIER_COLLISION_REGRESSION: PASS (%s, max y %.3f)" % [mode, greatest_y])
+	finished = true
+	get_tree().quit()
+
+func on_watchdog_timeout() -> void:
+	if finished:
+		return
+	push_error("RAPIER_COLLISION_REGRESSION: watchdog timeout")
+	get_tree().quit(1)

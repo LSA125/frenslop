@@ -8,7 +8,7 @@
 [ext_resource type="Shape2D" uid="uid://dlua18bl7y8gu" path="res://assets/shared/PlayerBodyShape.tres" id="6_uj5xo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3n60s"]
-size = Vector2(18, 8)
+size = Vector2(17, 12)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8dwan"]
 size = Vector2(20, 23)
@@ -16,12 +16,13 @@ size = Vector2(20, 23)
 [node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "ride_detector", "effects_detector", "animations", "internal_effects_holder")]
 collision_layer = 2
 collision_mask = 3
-floor_snap_length = 3.1
+floor_snap_length = 6.0
 platform_on_leave = 2
 platform_floor_layers = 4294901760
 script = ExtResource("1_c6bbt")
 SPEED = 200.0
 PUSH_FORCE = 20
+GROUND_CHECK_DISTANCE = 2.0
 input = NodePath("Input")
 rollback_sync = NodePath("RollbackSynchronizer")
 collision_shape = NodePath("CollisionShape2D")
@@ -35,8 +36,9 @@ metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 script = ExtResource("2_3n60s")
 root = NodePath("..")
 enable_prediction = true
-state_properties = Array[String]([":position", ":facing_right", ":velocity"])
-input_properties = Array[String](["Input:movement", "Input:jump"])
+state_properties = Array[String]([":position", ":facing_right", ":velocity", ":impulse_velocity"])
+full_state_interval = 1
+input_properties = Array[String](["Input:movement", "Input:jump", "Input:action"])
 metadata/_custom_type_script = "uid://d350u8evihs1u"
 
 [node name="Input" type="Node" parent="." unique_id=258905339]
@@ -44,21 +46,25 @@ script = ExtResource("2_hs7lg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=791727306]
 sprite_frames = ExtResource("5_afa2h")
-animation = &"run"
-frame_progress = 0.8192888
+animation = &"idle"
+frame_progress = 0.13647054
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=99890407]
-position = Vector2(0, 4.5)
+position = Vector2(0, 4)
 shape = ExtResource("6_uj5xo")
 
 [node name="RideDetector" type="ShapeCast2D" parent="." unique_id=732298474]
-position = Vector2(0, -7)
+visible = false
+position = Vector2(0, 16)
+enabled = false
 shape = SubResource("RectangleShape2D_3n60s")
 target_position = Vector2(0, 0)
-collision_mask = 2
+collision_mask = 3
 
 [node name="EffectsDetector" type="ShapeCast2D" parent="." unique_id=738121317]
+visible = false
 position = Vector2(0, 4.5)
+enabled = false
 shape = SubResource("RectangleShape2D_8dwan")
 target_position = Vector2(0, 0)
 collision_mask = 6
