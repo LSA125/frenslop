@@ -5,11 +5,12 @@ class_name Player
 @export var JUMP_VELOCITY := -400.0
 #the velocity a player can push another
 @export var PUSH_FORCE := 200
-@export var GROUND_CHECK_DISTANCE := 6.0
+@export var GROUND_CHECK_DISTANCE := 4.0
+@export var CARRIER_BLOCK_CHECK_DISTANCE := 2.0
 @export var facing_right := true
 
 
-@export_group("Imports") 
+@export_group("Imports")
 @export var input: PlayerInput
 @export var rollback_sync : RollbackSynchronizer
 @export var collision_shape : CollisionShape2D
@@ -23,6 +24,9 @@ class_name Player
 @export var attached_rope_object_ids : Array[int] = []
 @export var knockback_vel := Vector2.ZERO
 @export var KNOCKBACK_DECAY_SPEED := 800.0
+# not sure what to call it but, when we see if a collision is right, left, upwards etc
+# this is the tolerance for how closely the vector has to align in that direction.
+@export var COLLISION_NORMAL_TOLERANCE := 0.7
 
 @export_group("Equip System")
 enum EQUIP {NONE,}
@@ -33,115 +37,36 @@ var equip_item : Node = null
 # --- internally used variables ---
 var impulse_velocity := Vector2.ZERO
 var continuous_velocity := Vector2.ZERO
+var tick_velocity := Vector2.ZERO
+var emitted_velocity := Vector2.ZERO
 
 var rope_vel : Dictionary = {}
-var on_platform := false
 var grounded := false
-
-var riding_bodies : Array[Player] = []
-var is_riding := false
-var tick_position_offset := Vector2.ZERO
-
-static var _last_coordinated_tick := -1
 
 func _ready() -> void:
 	await get_tree().process_frame
 	set_multiplayer_authority(1)
 	input.set_multiplayer_authority(name.to_int())
-	if get_tree().get_nodes_in_group("rollback_players").is_empty():
-		_last_coordinated_tick = -1
-	add_to_group("rollback_players")
-	NetworkRollback.on_prepare_tick.connect(prepare)
-	NetworkRollback.after_prepare_tick.connect(after_prepare)
 	rollback_sync.process_settings()
 
-func _rollback_tick(delta: float, tick, _is_fresh) -> void:
-	if _last_coordinated_tick == tick:
-		return
-	_last_coordinated_tick = tick
-
-	var players := get_rollback_players()
-	for player in players:
-		player.force_update_transform()
-	for player in players:
-		player.ride_detector.force_shapecast_update()
-		player.effects_detector.force_shapecast_update()
-
-	var support_by_player := {}
-	for player in players:
-		var support := player.find_support_below()
-		if not support:
-			continue
-		support_by_player[player] = support
-		player.is_riding = support is Player
-		player.on_platform = support is MovingPlatform
-		if support is Player:
-			(support as Player).riding_bodies.append(player)
-
-	for player in players:
-		if NetworkRollback.is_simulated(player):
-			player.prepare_tick_effects(delta, tick)
-
-	var visited := {}
-	for player in players:
-		simulate_recursive(player, delta, support_by_player, visited)
-
-func simulate_recursive(
-	player: Player,
-	delta: float,
-	support_by_player: Dictionary,
-	visited: Dictionary
-) -> void:
-	if visited.has(player):
-		return
-	visited[player] = true
-
-	var support: Node2D = support_by_player.get(player)
-	if support is Player:
-		simulate_recursive(support, delta, support_by_player, visited)
-
-	if not NetworkRollback.is_simulated(player):
-		return
-
-	var start_position := player.global_position
-	if support is Player:
-		player.global_position += (support as Player).tick_position_offset
-	elif support is MovingPlatform:
-		player.global_position += (support as MovingPlatform).get_tick_offset()
-	if support:
-		player.force_update_transform()
-
-	player.simulate_tick_movement(delta)
-	player.tick_position_offset = player.global_position - start_position
-
-func prepare_tick_effects(delta: float, tick: int) -> void:
-	apply_equip(delta, tick)
-	apply_continuous_forces()
-	apply_impulse_forces()
-
-func simulate_tick_movement(delta: float) -> void:
-	for rider in riding_bodies:
-		add_collision_exception_with(rider)
-	apply_movement(delta)
-	for rider in riding_bodies:
-		remove_collision_exception_with(rider)
-	force_update_transform()
+func _rollback_tick(_delta: float, _tick: int, _is_fresh: bool) -> void:
+	pass
 
 func _process(_delta: float) -> void:
 	apply_animations()
 
-func prepare(_tick):
+func prepare_tick(delta: float) -> void:
 	continuous_velocity = Vector2.ZERO
-	is_riding = false
-	on_platform = false
-	tick_position_offset = Vector2.ZERO
-	riding_bodies.clear()
+	effects_detector.force_shapecast_update()
+	grounded = check_is_grounded()
+	apply_equip()
+	apply_continuous_forces()
+	apply_impulse_forces()
+	calc_input_movement(delta)
+	tick_velocity = velocity + impulse_velocity + continuous_velocity
+	emitted_velocity = Vector2.ZERO
 
-func after_prepare(_tick):
-	_last_coordinated_tick = -1
-
-
-func apply_equip(_delta, _tick) -> void:
+func apply_equip() -> void:
 	if input.action:
 		if active_equip:
 			return # TODO
@@ -151,7 +76,7 @@ func apply_continuous_forces() -> void:
 		if child.has_method("apply_velocity"):
 			continuous_velocity += child.apply_velocity(self)
 		else:
-			print("Child does not have apply_velocity method")
+			print("Internal Effect does not have apply_velocity method")
 #all bombs/explosions/springs. Any effect that would be an area2d
 #also player just cause its easy, i probably should have named this external
 #and internal forces...
@@ -161,33 +86,13 @@ func apply_impulse_forces() -> void:
 			var collider := effects_detector.get_collider(i)
 			if collider.has_method("apply_velocity"):
 				impulse_velocity += collider.apply_velocity(self)
-			if collider is Player:
-				var other_player := collider as Player
-				if is_riding or riding_bodies.has(other_player):
-					continue
 
-				#we are pushing the other player(lets not do bouncing off eachother yet...):
-				var my_push_force := PUSH_FORCE * input.movement
-				var other_push_force:float = collider.PUSH_FORCE * collider.input.movement
-
-				var total := other_push_force
-				#if we are pushing against eachother, take that force
-				if abs(my_push_force + other_push_force) < abs(other_push_force):
-					total = my_push_force + other_push_force
-				var force = Vector2(total,0)
-				#check the collision normal matches
-				if effects_detector.get_collision_normal(i).dot(force) > 0.7 * total:
-					continuous_velocity += force
-
-func apply_movement(delta: float) -> void:
-	grounded = check_is_grounded()
+func calc_input_movement(delta: float) -> void:
 	if not grounded:
 		velocity += get_gravity() * delta
 	elif input.jump:
 		velocity.y = JUMP_VELOCITY
 		grounded = false
-		is_riding = false
-		on_platform = false
 	else:
 		velocity.y = 0
 
@@ -201,61 +106,130 @@ func apply_movement(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, SPEED)
 
-	var applied_impulse_velocity := impulse_velocity
 	impulse_velocity = impulse_velocity.move_toward(Vector2.ZERO, KNOCKBACK_DECAY_SPEED*delta)
-	var additive_velocity := applied_impulse_velocity + continuous_velocity
-	velocity += additive_velocity
-	velocity *= NetworkTime.physics_factor
-	move_and_slide()
-	velocity /= NetworkTime.physics_factor
-	velocity -= additive_velocity
 
-func get_rollback_players() -> Array[Player]:
-	var players: Array[Player] = []
-	for node in get_tree().get_nodes_in_group("rollback_players"):
-		var player := node as Player
-		if player:
-			players.append(player)
-
-	players.sort_custom(sort_nodes_by_path)
-	return players
-
-static func sort_nodes_by_path(a: Node, b: Node) -> bool:
-	return String(a.get_path()) < String(b.get_path())
-
-func find_support_below() -> Node2D:
-	var support: Node2D = null
-	var closest_gap := INF
+func apply_ride_velocity() -> void:
+	var support: Node2D
 	for index in ride_detector.get_collision_count():
 		var collider := ride_detector.get_collider(index) as Node2D
 		if not (collider is Player or collider is MovingPlatform):
 			continue
-		if collider is Player and collider.global_position.y <= global_position.y:
+		if ride_detector.get_collision_normal(index).dot(Vector2.UP) <= COLLISION_NORMAL_TOLERANCE:
 			continue
-
-		var support_top := (
-			(collider as Player).get_shape_top()
-			if collider is Player
-			else (collider as MovingPlatform).get_shape_top()
-		)
-		var gap := absf(support_top - get_shape_bottom())
-		if gap < closest_gap or (
-			is_equal_approx(gap, closest_gap)
-			and support != null
+		if collider.global_position.y <= global_position.y:
+			continue
+		if support == null or collider.global_position.y < support.global_position.y or (
+			is_equal_approx(collider.global_position.y, support.global_position.y)
 			and String(collider.get_path()) < String(support.get_path())
 		):
 			support = collider
-			closest_gap = gap
-	return support
+	if input.jump:
+		update_emitted_velocity(null)
+		return
+	if support != null and tick_velocity.y >= 0.0 and check_is_grounded():
+		tick_velocity.y -= velocity.y
+		velocity.y = 0.0
+		grounded = true
+	if support is Player:
+		tick_velocity += (support as Player).emitted_velocity
+	elif support is MovingPlatform:
+		tick_velocity += (support as MovingPlatform).get_tick_offset() / NetworkTime.ticktime
+	update_emitted_velocity(support)
 
+func update_emitted_velocity(support: Node2D) -> void:
+	emitted_velocity = tick_velocity
+	var direction := signf(tick_velocity.x)
+	if is_zero_approx(direction):
+		return
+
+	effects_detector.target_position = Vector2(direction * CARRIER_BLOCK_CHECK_DISTANCE, 0.0)
+	effects_detector.force_shapecast_update()
+	var pushed_player := false
+	var blocked_by_other := false
+	for index in effects_detector.get_collision_count():
+		var collider := effects_detector.get_collider(index)
+		if collider == support or not (collider is PhysicsBody2D):
+			continue
+		if (
+			effects_detector.get_collision_normal(index).dot(Vector2(direction, 0.0))
+			>= -COLLISION_NORMAL_TOLERANCE
+		):
+			continue
+		if collider is Player:
+			pushed_player = true
+		else:
+			blocked_by_other = true
+	effects_detector.target_position = Vector2.ZERO
+
+	if not pushed_player and not blocked_by_other:
+		return
+	emitted_velocity.x = 0.0
+	if pushed_player and not blocked_by_other and signf(input.movement) == direction:
+		var push_velocity := PUSH_FORCE * input.movement
+		emitted_velocity.x = direction * minf(absf(tick_velocity.x), absf(push_velocity))
+
+func custom_move_x(delta: float) -> void:
+	var motion := Vector2(tick_velocity.x * delta, 0.0)
+	var collision := move_and_collide(motion, false, safe_margin, true)
+	if (
+		collision
+		and motion.dot(collision.get_normal()) < 0.0
+		and absf(collision.get_normal().x) > COLLISION_NORMAL_TOLERANCE
+	):
+		velocity.x = 0.0
+		tick_velocity.x = 0.0
+
+func custom_move_y(delta: float) -> void:
+	var motion := Vector2(0.0, tick_velocity.y * delta)
+	var collision := move_and_collide(motion, false, safe_margin, true)
+	if not collision:
+		return
+	var normal := collision.get_normal()
+	if normal.dot(Vector2.UP) > COLLISION_NORMAL_TOLERANCE:
+		grounded = true
+		if tick_velocity.y > 0.0:
+			velocity.y = 0.0
+			tick_velocity.y = 0.0
+	elif normal.dot(Vector2.DOWN) > COLLISION_NORMAL_TOLERANCE and tick_velocity.y < 0.0:
+		var collider := collision.get_collider() as Player
+		var collider_is_moving_up := collider != null and collider.tick_velocity.y < 0.0
+		if not collider_is_moving_up:
+			velocity.y = 0.0
+			tick_velocity.y = 0.0
+
+func apply_ground_snap() -> void:
+	if input.jump or velocity.y < 0.0:
+		return
+	var snap_motion := Vector2.DOWN * GROUND_CHECK_DISTANCE
+	var collision := move_and_collide(snap_motion, true, safe_margin, false)
+	if (
+		collision == null
+		or collision.get_normal().dot(Vector2.UP) <= COLLISION_NORMAL_TOLERANCE
+	):
+		return
+	collision = move_and_collide(snap_motion, false, safe_margin, false)
+	if (
+		collision == null
+		or collision.get_normal().dot(Vector2.UP) <= COLLISION_NORMAL_TOLERANCE
+	):
+		return
+	grounded = true
+	velocity.y = 0.0
+	tick_velocity.y = 0.0
+
+func check_is_grounded() -> bool:
+	var collision := KinematicCollision2D.new()
+	return (
+		test_move(global_transform, Vector2.DOWN * GROUND_CHECK_DISTANCE, collision)
+		and collision.get_normal().dot(Vector2.UP) > COLLISION_NORMAL_TOLERANCE
+	)
 
 func apply_animations() -> void:
-		
 	face_direction(facing_right)
-	
+
 	if input.action:
 		animations.play(&"wall_jump")
-	if grounded or on_platform:
+	if grounded:
 		if absf(input.movement) < 0.01:
 			animations.play(&"idle")
 		elif impulse_velocity.length() > 1000:
@@ -271,27 +245,9 @@ func apply_animations() -> void:
 			animations.play(&"spin")
 		else:
 			animations.play(&"idle")
+
 func face_direction(right : bool) -> void:
 	if right:
 		animations.flip_h = false
 	else:
 		animations.flip_h = true
-# Deterministic replacement for is_on_floor()
-func check_is_grounded() -> bool:
-	var collision := KinematicCollision2D.new()
-	if test_move(global_transform, Vector2.DOWN * GROUND_CHECK_DISTANCE, collision):
-		if collision.get_normal().dot(Vector2.UP) > 0.7:
-			return true
-	return false
-
-func get_shape_top() -> float:
-	return collision_shape.global_position.y - get_shape_half_extents().y
-
-func get_shape_bottom() -> float:
-	return collision_shape.global_position.y + get_shape_half_extents().y
-
-func get_shape_half_extents() -> Vector2:
-	var rectangle := collision_shape.shape as RectangleShape2D
-	if rectangle:
-		return rectangle.size * 0.5
-	return Vector2.ZERO

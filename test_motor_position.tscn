@@ -1,9 +1,9 @@
-[gd_scene format=3 uid="uid://dufpjbflrebmt"]
+[gd_scene format=3 uid="uid://by5q55nhrknwe"]
 
-[ext_resource type="Script" uid="uid://de4wf7wb5aule" path="res://test_motor_position.gd" id="1_airgf"]
-[ext_resource type="Script" uid="uid://ch4e8om5vmkgs" path="res://test_motor_position_beam.gd" id="1_i7gvn"]
+[ext_resource type="Script" path="res://test_motor_position.gd" id="1_airgf"]
+[ext_resource type="Script" path="res://test_motor_position_beam.gd" id="1_i7gvn"]
 [ext_resource type="Script" uid="uid://unwhnooi7g2c" path="res://addons/godot-rapier2d/custom_nodes/rapier_rigid_body_2d.gd" id="2_airgf"]
-[ext_resource type="Script" uid="uid://bjckrk4dmnguh" path="res://test_motor_position_spawner.gd" id="3_qmxtd"]
+[ext_resource type="Script" path="res://test_motor_position_spawner.gd" id="3_qmxtd"]
 [ext_resource type="Script" uid="uid://bv2bc4lt5v7hu" path="res://addons/godot-rapier2d/custom_nodes/rapier_pin_joint_2d.gd" id="4_dnnds"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rl7rh"]

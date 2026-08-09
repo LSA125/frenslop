@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/production_e2e_bootstrap.gd" id="1_bootstrap"]
+
+[node name="ProductionE2EBootstrap" type="Node"]
+script = ExtResource("1_bootstrap")

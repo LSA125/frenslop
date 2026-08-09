@@ -51,6 +51,10 @@ func _ready() -> void:
 		floor_body.force_update_transform()
 		ball.force_update_transform()
 		RapierPhysicsServer2D.space_flush_queries(driver.physics_space)
+		if not verify_cache_restore(driver, ball):
+			finished = true
+			get_tree().quit(1)
+			return
 
 	var greatest_y := ball.global_position.y
 	var logged_contact := false
@@ -90,3 +94,26 @@ func on_watchdog_timeout() -> void:
 		return
 	push_error("RAPIER_COLLISION_REGRESSION: watchdog timeout")
 	get_tree().quit(1)
+
+func verify_cache_restore(driver: RapierDriver2D, ball: BouncingBall) -> bool:
+	const CACHE_TEST_TICK := -1000
+	var expected_state := ball.physics_state.duplicate(true)
+	driver._snapshot_space(CACHE_TEST_TICK)
+
+	var disturbed_state := expected_state.duplicate(true)
+	disturbed_state[NetworkRigidBody2D.ORIGIN] += Vector2(37.0, 53.0)
+	ball.physics_state = disturbed_state
+	driver._rollback_space(CACHE_TEST_TICK)
+
+	var restored_state := ball.physics_state
+	var position_error := (
+		(restored_state[NetworkRigidBody2D.ORIGIN] as Vector2)
+		.distance_to(expected_state[NetworkRigidBody2D.ORIGIN])
+	)
+	if position_error > 0.001:
+		push_error(
+			"RAPIER_COLLISION_REGRESSION: cached space did not restore (error %.4f)" %
+				position_error
+		)
+		return false
+	return true

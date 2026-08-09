@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://w1xt0xhwhgyc"]
+
+[ext_resource type="Script" uid="uid://c8omjh28dp23r" path="res://tests/network_rollback_riding_integration.gd" id="1_test"]
+
+[node name="NetworkRollbackRidingIntegration" type="Node2D" unique_id=1983493720]
+script = ExtResource("1_test")
+
+[node name="World" type="Node2D" parent="." unique_id=1502693189]
+
+[node name="Players" type="Node2D" parent="World" unique_id=567503113]

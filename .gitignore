@@ -3,3 +3,6 @@
 /android/
 .vscode/
 *.md
+.pytest_cache/
+.pytest-deps/
+__pycache__/

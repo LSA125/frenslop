@@ -21,6 +21,10 @@ func _ready() -> void:
 	driver.rollback_physics_space = false
 	add_child(driver)
 	physics_space = driver.physics_space
+	if NetworkRollback.on_process_tick.is_connected(driver.on_process_tick):
+		push_error("ROLLBACK_RIDING_REGRESSION: disabled driver still processes rollback physics")
+		get_tree().quit(1)
+		return
 
 	var platform := PLATFORM_SCENE.instantiate() as MovingPlatform
 	platform.name = "TestPlatform"
@@ -39,6 +43,15 @@ func _ready() -> void:
 
 	await get_tree().process_frame
 	await get_tree().process_frame
+	verify_riding_dependency_closure(players)
+	if not failures.is_empty():
+		finish_test(platform, players)
+		return
+	if "--dependency-closure-only" in OS.get_cmdline_user_args():
+		print("ROLLBACK_RIDING_DEPENDENCY_CLOSURE: PASS")
+		cleanup_test_nodes(platform, players)
+		get_tree().quit()
+		return
 
 	var platform_top := platform.get_shape_top()
 	players[0].global_position = Vector2(platform.global_position.x, 0.0)
@@ -121,6 +134,41 @@ func run_tick(platform: MovingPlatform, players: Array[Player], tick: int) -> vo
 		NetworkRollback.notify_simulated(player)
 
 	players[0]._rollback_tick(NetworkTime.ticktime, tick, true)
+
+func verify_riding_dependency_closure(players: Array[Player]) -> void:
+	var carrier := players[0]
+	var rider := players[players.size() - 1]
+	var support_by_player := {rider: carrier}
+
+	NetworkRollback._simulated_nodes.clear()
+	NetworkRollback._mutated_nodes.clear()
+	NetworkRollback.notify_simulated(carrier)
+	var dependency_states := carrier.include_riding_dependencies(players, support_by_player)
+	if not NetworkRollback.is_simulated(rider):
+		failures.append("Riding dependency closure did not include the rider")
+	carrier.mutate_changed_dependencies(dependency_states, 1)
+	if NetworkRollback.is_mutated(rider, 1):
+		failures.append("Unchanged riding dependency was unnecessarily mutated")
+	rider.position += Vector2.ONE
+	carrier.mutate_changed_dependencies(dependency_states, 1)
+	if not NetworkRollback.is_mutated(rider, 1):
+		failures.append("Changed riding dependency was not mutated")
+	rider.position -= Vector2.ONE
+
+	NetworkRollback._simulated_nodes.clear()
+	NetworkRollback._mutated_nodes.clear()
+	NetworkRollback.notify_simulated(rider)
+	dependency_states = carrier.include_riding_dependencies(players, support_by_player)
+	if not NetworkRollback.is_simulated(carrier):
+		failures.append("Riding dependency closure did not include the carrier")
+	carrier.position += Vector2.ONE
+	carrier.mutate_changed_dependencies(dependency_states, 2)
+	if not NetworkRollback.is_mutated(carrier, 2):
+		failures.append("Changed carrier dependency was not mutated")
+	carrier.position -= Vector2.ONE
+
+	NetworkRollback._simulated_nodes.clear()
+	NetworkRollback._mutated_nodes.clear()
 
 func sync_physics_queries() -> void:
 	RapierPhysicsServer2D.space_step(physics_space, 0.0)

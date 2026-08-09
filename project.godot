@@ -73,16 +73,17 @@ Drop={
 2d_physics/layer_1="Environment"
 2d_physics/layer_2="Players"
 2d_physics/layer_3="Effects"
+2d_physics/layer_4="Platforms"
 
 [netfox]
 
 time/max_ticks_per_frame=24
 time/tickrate=30
 extras/auto_tile_windows=true
-time/sync_to_physics=true
-rollback/input_redundancy=6
-rollback/enable_diff_states=false
-rollback/input_delay=2
+time/sync_to_physics=false
+rollback/enable_diff_states=true
+rollback/input_delay=3
+rollback/input_redundancy=8
 
 [physics]
 

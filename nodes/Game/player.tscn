@@ -22,7 +22,7 @@ platform_floor_layers = 4294901760
 script = ExtResource("1_c6bbt")
 SPEED = 200.0
 PUSH_FORCE = 20
-GROUND_CHECK_DISTANCE = 2.0
+GROUND_CHECK_DISTANCE = 4.0
 input = NodePath("Input")
 rollback_sync = NodePath("RollbackSynchronizer")
 collision_shape = NodePath("CollisionShape2D")
@@ -56,18 +56,16 @@ shape = ExtResource("6_uj5xo")
 [node name="RideDetector" type="ShapeCast2D" parent="." unique_id=732298474]
 visible = false
 position = Vector2(0, 16)
-enabled = false
 shape = SubResource("RectangleShape2D_3n60s")
-target_position = Vector2(0, 0)
-collision_mask = 3
+target_position = Vector2(0, 2)
+collision_mask = 10
 
 [node name="EffectsDetector" type="ShapeCast2D" parent="." unique_id=738121317]
 visible = false
 position = Vector2(0, 4.5)
-enabled = false
 shape = SubResource("RectangleShape2D_8dwan")
 target_position = Vector2(0, 0)
-collision_mask = 6
+collision_mask = 7
 collide_with_areas = true
 
 [node name="InternalEffects" type="Node" parent="." unique_id=2005917229]

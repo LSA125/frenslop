@@ -20,15 +20,23 @@ func _ready() -> void:
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 
-func host_game(player_name: String) -> void:
+func host_game(
+	player_name: String,
+	configured_peer: ENetMultiplayerPeer = null
+) -> void:
 	if player_name.is_empty():
 		player_name = "Host_%s" % (randi() % 1000)
 
-	peer = ENetMultiplayerPeer.new()
-	var error := peer.create_server(port)
-	if error != OK:
-		push_error("Failed to host: %s" % error)
-		return
+	# Tests and local network simulators may create the ENet transport first.
+	# Peer assignment and the rest of the lobby lifecycle still stay on this path.
+	if configured_peer == null:
+		peer = ENetMultiplayerPeer.new()
+		var error := peer.create_server(port)
+		if error != OK:
+			push_error("Failed to host: %s" % error)
+			return
+	else:
+		peer = configured_peer
 
 	peer.get_host().compress(ENetConnection.COMPRESS_RANGE_CODER)
 	multiplayer.multiplayer_peer = peer
@@ -37,18 +45,25 @@ func host_game(player_name: String) -> void:
 	players[1] = local_player
 	print("Server started.")
 
-func join_game(address: String, player_name: String) -> void:
+func join_game(
+	address: String,
+	player_name: String,
+	configured_peer: ENetMultiplayerPeer = null
+) -> void:
 	if address.is_empty():
 		address = default_address
 	if player_name.is_empty():
 		player_name = "Player_%s" % (randi() % 1000)
 
-	peer = ENetMultiplayerPeer.new()
-	var error := peer.create_client(address, port)
+	if configured_peer == null:
+		peer = ENetMultiplayerPeer.new()
+		var error := peer.create_client(address, port)
+		if error != OK:
+			push_error("Failed to start client: %s" % error)
+			return
+	else:
+		peer = configured_peer
 	peer.get_host().compress(ENetConnection.COMPRESS_RANGE_CODER)
-	if error != OK:
-		push_error("Failed to start client: %s" % error)
-		return
 
 	local_player = PlayerInfo.create(0, player_name, address)
 	multiplayer.multiplayer_peer = peer

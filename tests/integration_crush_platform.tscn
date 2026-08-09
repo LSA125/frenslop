@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/integration_crush_platform.gd" id="1_platform"]
+[ext_resource type="Script" path="res://addons/netfox/tick-interpolator.gd" id="2_interpolator"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_platform"]
+size = Vector2(76, 20)
+
+[node name="IntegrationCrushPlatform" type="AnimatableBody2D" node_paths=PackedStringArray("collision_shape")]
+collision_mask = 3
+sync_to_physics = false
+script = ExtResource("1_platform")
+collision_shape = NodePath("CollisionShape2D")
+
+[node name="TickInterpolator" type="Node" parent="." node_paths=PackedStringArray("root")]
+script = ExtResource("2_interpolator")
+root = NodePath("..")
+properties = Array[String]([":position"])
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_platform")

@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://byxivut0velug"]
 
+[ext_resource type="Script" uid="uid://be2e71devobe8" path="res://scripts/game/PlayerManager.gd" id="1_kiw3p"]
 [ext_resource type="Script" uid="uid://dp1gd78pe4fwp" path="res://scripts/game/MultiplayerSpawner.gd" id="2_qbsmt"]
 [ext_resource type="PackedScene" uid="uid://dnekija28fofs" path="res://nodes/game/player.tscn" id="2_s0nni"]
 [ext_resource type="PackedScene" uid="uid://dxdilstx04hyq" path="res://nodes/game/moving_platform.tscn" id="3_cpr0p"]
@@ -13,6 +14,9 @@ colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_iywne"]
 gradient = SubResource("Gradient_lbhrr")
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kiw3p"]
+size = Vector2(123, 18)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_p57ef"]
 size = Vector2(1150, 40)
 
@@ -20,6 +24,17 @@ size = Vector2(1150, 40)
 friction = 0.0
 
 [node name="Game" type="Node2D" unique_id=1550934290]
+
+[node name="Floor2" type="StaticBody2D" parent="." unique_id=2008743758]
+
+[node name="Sprite2D" type="Sprite2D" parent="Floor2" unique_id=80440858]
+position = Vector2(1094.75, 555.99994)
+scale = Vector2(0.47460938, 17.000105)
+texture = SubResource("GradientTexture1D_iywne")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor2" unique_id=1887127816]
+position = Vector2(1093.5, 565)
+shape = SubResource("RectangleShape2D_kiw3p")
 
 [node name="Floor" type="StaticBody2D" parent="." unique_id=379081225]
 
@@ -69,6 +84,7 @@ position = Vector2(0, 21)
 shape = SubResource("RectangleShape2D_p57ef")
 
 [node name="Players" type="Node2D" parent="." unique_id=1406540887]
+script = ExtResource("1_kiw3p")
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1459777557]
 _spawnable_scenes = PackedStringArray("uid://dnekija28fofs", "uid://d2a43d0d04lel")
@@ -98,7 +114,7 @@ position = Vector2(572, 446)
 
 [node name="RapierDriver2D" type="Node" parent="." unique_id=1835466796]
 script = ExtResource("5_aug50")
-rollback_physics_space = false
+physics_factor = 1
 metadata/_custom_type_script = "uid://bcc28dvk0pufe"
 
 [node name="Bat" parent="." unique_id=2140782126 instance=ExtResource("6_aug50")]

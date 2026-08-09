@@ -12,6 +12,7 @@ gradient = SubResource("Gradient_78awf")
 size = Vector2(76, 20)
 
 [node name="MovingPlatform" type="AnimatableBody2D" unique_id=461333593 node_paths=PackedStringArray("collision_shape")]
+collision_layer = 2
 collision_mask = 3
 sync_to_physics = false
 script = ExtResource("1_qjc1e")
