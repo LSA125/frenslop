@@ -356,6 +356,24 @@ def test_high_latency_stationary_stack_has_no_sag(tmp_path: Path) -> None:
     assert metrics["max_render_backtrack"] <= 0.5, metrics
 
 
+@pytest.mark.parametrize("latency_ms", [0, 50])
+def test_top_rider_matches_bottom_player_horizontal_motion(
+    latency_ms: int,
+    tmp_path: Path,
+) -> None:
+    metrics = _run_network_case("client", latency_ms, "bottom_walk", tmp_path)
+
+    assert metrics["max_bottom_walk_distance"] > 40.0, metrics
+    assert metrics["rollback_carrier_walk_frames"] > 0, metrics
+    assert metrics["rollback_rider_walk_mismatch_frames"] == 0, metrics
+    assert metrics["max_rollback_rider_walk_error"] <= 0.1, metrics
+    assert metrics["max_horizontal_error"] <= 2.0, metrics
+    assert metrics["max_sag"] <= 2.0, metrics
+    assert metrics["falling_frames"] == 0, metrics
+    assert metrics["unsupported_frames"] == 0, metrics
+    assert metrics["max_render_stack_gap_change"] <= 2.0, metrics
+
+
 @pytest.mark.parametrize("latency_ms", [0, 50, 200])
 def test_rider_follows_bottom_jump_without_delay(
     latency_ms: int,

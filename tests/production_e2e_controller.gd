@@ -12,6 +12,7 @@ const JUMP_TICK_OFFSET := 15
 const SETUP_LEAD_TICKS := 32
 const SETTLE_TICKS := 34
 const STACK_HORIZONTAL_TICKS := 15
+const BOTTOM_WALK_TICKS := 18
 const CRUSH_TRAVEL_TICKS := 30
 const CRUSH_PLATFORM_START_Y := 420.0
 const CRUSH_PLATFORM_END_Y := 522.0
@@ -19,6 +20,7 @@ const RIDE_PLATFORM_START_Y := 582.0
 const RIDE_PLATFORM_END_Y := 482.0
 const RIDE_PLATFORM_TRAVEL_X := 100.0
 const SCENARIO_STATIONARY := "stationary"
+const SCENARIO_BOTTOM_WALK := "bottom_walk"
 const SCENARIO_BOTTOM_JUMP := "bottom_jump"
 const SCENARIO_PLATFORM_CRUSH := "platform_crush"
 const SCENARIO_PLATFORM_RIDE_UP := "platform_ride_up"
@@ -46,6 +48,8 @@ var begin_tick := -1
 var end_tick := -1
 var jump_input_tick := -1
 var jump_injected := false
+var bottom_walk_start_position_x := INF
+var max_bottom_walk_distance := 0.0
 var jump_start_position_y := INF
 var jump_peak_position_y := INF
 var last_sample_tick := -1
@@ -54,6 +58,7 @@ var host_player: Player
 var client_player: Player
 var bottom_player: Player
 var top_player: Player
+var order_manager: RollbackOrderManager
 var crush_platform
 var ride_platform: MovingPlatform
 
@@ -74,6 +79,9 @@ var stack_geometry_frames := 0
 var rollback_carrier_jump_frames := 0
 var rollback_rider_motion_mismatch_frames := 0
 var max_rollback_rider_motion_error := 0.0
+var rollback_carrier_walk_frames := 0
+var rollback_rider_walk_mismatch_frames := 0
+var max_rollback_rider_walk_error := 0.0
 var rollback_start_tick := -1
 var rollback_bottom_start_position := Vector2.ZERO
 var rollback_top_start_position := Vector2.ZERO
@@ -122,6 +130,7 @@ func _ready() -> void:
 		return
 	if scenario not in [
 		SCENARIO_STATIONARY,
+		SCENARIO_BOTTOM_WALK,
 		SCENARIO_BOTTOM_JUMP,
 		SCENARIO_PLATFORM_CRUSH,
 		SCENARIO_PLATFORM_RIDE_UP,
@@ -237,9 +246,10 @@ func _try_start_production_game() -> void:
 
 
 func _try_mark_game_ready(game: Node) -> void:
-	var players_root := game.get_node_or_null("Players")
+	var players_root := game.get_node_or_null("RollbackOrderManager/Players")
 	if players_root == null or players_root.get_child_count() < 2:
 		return
+	order_manager = game.get_node("RollbackOrderManager") as RollbackOrderManager
 
 	client_peer_id = _find_client_peer_id()
 	if client_peer_id <= 1:
@@ -257,12 +267,12 @@ func _try_mark_game_ready(game: Node) -> void:
 	top_player = client_player if bottom_role == "host" else host_player
 	if scenario == SCENARIO_PLATFORM_CRUSH and not is_instance_valid(crush_platform):
 		crush_platform = CRUSH_PLATFORM_SCENE.instantiate()
-		game.add_child(crush_platform)
+		game.get_node("RollbackOrderManager/MovingObjects").add_child(crush_platform)
 	elif scenario == SCENARIO_PLATFORM_RIDE_UP and not is_instance_valid(ride_platform):
 		ride_platform = RIDE_PLATFORM_SCENE.instantiate() as MovingPlatform
-		game.add_child(ride_platform)
+		game.get_node("RollbackOrderManager/MovingObjects").add_child(ride_platform)
 	if not NetworkRollback.after_prepare_tick.is_connected(_capture_rollback_tick_start):
-		# PlayerManager is already connected, so this records the restored positions
+		# RollbackOrderManager is connected, so this records restored positions
 		# after production preparation and immediately before the movement phase.
 		NetworkRollback.after_prepare_tick.connect(_capture_rollback_tick_start)
 	local_game_ready = true
@@ -342,6 +352,15 @@ func _on_before_tick_loop() -> void:
 				"tick": NetworkTime.tick,
 			})
 
+	if scenario == SCENARIO_BOTTOM_WALK:
+		if not bottom_player.input.is_multiplayer_authority():
+			return
+		if NetworkTime.tick == begin_tick:
+			bottom_walk_start_position_x = bottom_player.global_position.x
+			Input.action_press("MoveRight")
+		elif NetworkTime.tick == begin_tick + BOTTOM_WALK_TICKS:
+			Input.action_release("MoveRight")
+		return
 	if scenario != SCENARIO_BOTTOM_JUMP or not bottom_player.input.is_multiplayer_authority():
 		return
 	if NetworkTime.tick == jump_input_tick:
@@ -378,6 +397,11 @@ func _sample_display_state() -> void:
 	max_sag = maxf(max_sag, vertical_gap)
 	max_separation = maxf(max_separation, -vertical_gap)
 	max_horizontal_error = maxf(max_horizontal_error, absf(horizontal_gap))
+	if scenario == SCENARIO_BOTTOM_WALK and not is_inf(bottom_walk_start_position_x):
+		max_bottom_walk_distance = maxf(
+			max_bottom_walk_distance,
+			absf(bottom_player.global_position.x - bottom_walk_start_position_x)
+		)
 	if rider.animations.animation == &"fall":
 		falling_frames += 1
 	if rider.animations.animation == &"jump":
@@ -559,6 +583,7 @@ func _get_metrics() -> Dictionary:
 		"final_player_penetration": final_player_penetration,
 		"max_horizontal_error": max_horizontal_error,
 		"max_bottom_render_step": max_bottom_render_step,
+		"max_bottom_walk_distance": max_bottom_walk_distance,
 		"max_platform_penetration": max_platform_penetration,
 		"max_platform_render_step": max_platform_render_step,
 		"max_player_penetration": max_player_penetration,
@@ -572,8 +597,11 @@ func _get_metrics() -> Dictionary:
 		"render_backtrack_frames": render_backtrack_frames,
 		"render_sample_count": render_sample_count,
 		"rollback_carrier_jump_frames": rollback_carrier_jump_frames,
+		"rollback_carrier_walk_frames": rollback_carrier_walk_frames,
 		"rollback_rider_motion_mismatch_frames": rollback_rider_motion_mismatch_frames,
+		"rollback_rider_walk_mismatch_frames": rollback_rider_walk_mismatch_frames,
 		"max_rollback_rider_motion_error": max_rollback_rider_motion_error,
+		"max_rollback_rider_walk_error": max_rollback_rider_walk_error,
 		"ride_detector_connected_frames": ride_detector_connected_frames,
 		"ride_detector_disconnected_frames": ride_detector_disconnected_frames,
 		"ride_detector_sample_count": ride_detector_sample_count,
@@ -602,17 +630,15 @@ func _sample_ride_detector_tick(tick: int) -> void:
 	):
 		return
 	bottom_player.force_update_transform()
-	bottom_player.ride_detector.force_shapecast_update()
 	ride_detector_sample_count += 1
 	if is_inf(ride_platform_start_position_y):
 		ride_platform_start_position_y = ride_platform.global_position.y
 	ride_platform_peak_position_y = minf(
 		ride_platform_peak_position_y, ride_platform.global_position.y
 	)
-	for index in bottom_player.ride_detector.get_collision_count():
-		if bottom_player.ride_detector.get_collider(index) == ride_platform:
-			ride_detector_connected_frames += 1
-			return
+	if order_manager.ride_supports.get(bottom_player) == ride_platform:
+		ride_detector_connected_frames += 1
+		return
 	ride_detector_disconnected_frames += 1
 
 
@@ -625,6 +651,27 @@ func _capture_rollback_tick_start(tick: int) -> void:
 
 
 func _sample_rollback_ride_velocity_tick(tick: int) -> void:
+	if (
+		scenario == SCENARIO_BOTTOM_WALK
+		and rollback_start_tick == tick
+		and is_instance_valid(bottom_player)
+		and is_instance_valid(top_player)
+	):
+		var carrier_motion_x := (
+			bottom_player.global_position.x - rollback_bottom_start_position.x
+		)
+		if absf(carrier_motion_x) > 0.05:
+			var rider_motion_x := (
+				top_player.global_position.x - rollback_top_start_position.x
+			)
+			var walk_error := absf(rider_motion_x - carrier_motion_x)
+			rollback_carrier_walk_frames += 1
+			max_rollback_rider_walk_error = maxf(
+				max_rollback_rider_walk_error, walk_error
+			)
+			if walk_error > 0.1:
+				rollback_rider_walk_mismatch_frames += 1
+		return
 	if (
 		scenario != SCENARIO_BOTTOM_JUMP
 		or not NetworkRollback.is_rollback()
@@ -647,26 +694,7 @@ func _sample_rollback_ride_velocity_tick(tick: int) -> void:
 
 
 func _ride_detector_support(player: Player) -> Node2D:
-	player.force_update_transform()
-	player.ride_detector.force_shapecast_update()
-	var support: Node2D
-	for index in player.ride_detector.get_collision_count():
-		var collider := player.ride_detector.get_collider(index) as Node2D
-		if not (collider is Player or collider is MovingPlatform):
-			continue
-		if (
-			player.ride_detector.get_collision_normal(index).dot(Vector2.UP)
-			<= player.COLLISION_NORMAL_TOLERANCE
-		):
-			continue
-		if collider.global_position.y <= player.global_position.y:
-			continue
-		if support == null or collider.global_position.y < support.global_position.y or (
-			is_equal_approx(collider.global_position.y, support.global_position.y)
-			and String(collider.get_path()) < String(support.get_path())
-		):
-			support = collider
-	return support
+	return order_manager.ride_supports.get(player) as Node2D
 
 
 func _shape_top(body: Node2D) -> float:

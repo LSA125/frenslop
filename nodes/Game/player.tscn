@@ -8,12 +8,12 @@
 [ext_resource type="Shape2D" uid="uid://dlua18bl7y8gu" path="res://assets/shared/PlayerBodyShape.tres" id="6_uj5xo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3n60s"]
-size = Vector2(17, 12)
+size = Vector2(17, 5)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8dwan"]
 size = Vector2(20, 23)
 
-[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "ride_detector", "effects_detector", "animations", "internal_effects_holder")]
+[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "animations", "internal_effects_holder")]
 collision_layer = 2
 collision_mask = 3
 floor_snap_length = 6.0
@@ -22,12 +22,11 @@ platform_floor_layers = 4294901760
 script = ExtResource("1_c6bbt")
 SPEED = 200.0
 PUSH_FORCE = 20
-GROUND_CHECK_DISTANCE = 4.0
 input = NodePath("Input")
 rollback_sync = NodePath("RollbackSynchronizer")
 collision_shape = NodePath("CollisionShape2D")
-ride_detector = NodePath("RideDetector")
-effects_detector = NodePath("EffectsDetector")
+ride_query_shape = SubResource("RectangleShape2D_3n60s")
+effects_query_shape = SubResource("RectangleShape2D_8dwan")
 animations = NodePath("AnimatedSprite2D")
 internal_effects_holder = NodePath("InternalEffects")
 metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
@@ -52,21 +51,6 @@ frame_progress = 0.13647054
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=99890407]
 position = Vector2(0, 4)
 shape = ExtResource("6_uj5xo")
-
-[node name="RideDetector" type="ShapeCast2D" parent="." unique_id=732298474]
-visible = false
-position = Vector2(0, 16)
-shape = SubResource("RectangleShape2D_3n60s")
-target_position = Vector2(0, 2)
-collision_mask = 10
-
-[node name="EffectsDetector" type="ShapeCast2D" parent="." unique_id=738121317]
-visible = false
-position = Vector2(0, 4.5)
-shape = SubResource("RectangleShape2D_8dwan")
-target_position = Vector2(0, 0)
-collision_mask = 7
-collide_with_areas = true
 
 [node name="InternalEffects" type="Node" parent="." unique_id=2005917229]
 

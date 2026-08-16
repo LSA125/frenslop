@@ -47,11 +47,16 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		driver = RapierDriver2D.new()
 		driver.rollback_physics_space = true
+		driver.physics_factor = 1
 		add_child(driver)
 		floor_body.force_update_transform()
 		ball.force_update_transform()
 		RapierPhysicsServer2D.space_flush_queries(driver.physics_space)
 		if not verify_cache_restore(driver, ball):
+			finished = true
+			get_tree().quit(1)
+			return
+		if not verify_step_then_flush(driver, ball):
 			finished = true
 			get_tree().quit(1)
 			return
@@ -96,14 +101,16 @@ func on_watchdog_timeout() -> void:
 	get_tree().quit(1)
 
 func verify_cache_restore(driver: RapierDriver2D, ball: BouncingBall) -> bool:
-	const CACHE_TEST_TICK := -1000
+	const FIRST_CACHE_TEST_TICK := -1000
+	const SECOND_CACHE_TEST_TICK := 37
 	var expected_state := ball.physics_state.duplicate(true)
-	driver._snapshot_space(CACHE_TEST_TICK)
+	driver._snapshot_space(FIRST_CACHE_TEST_TICK)
 
 	var disturbed_state := expected_state.duplicate(true)
 	disturbed_state[NetworkRigidBody2D.ORIGIN] += Vector2(37.0, 53.0)
 	ball.physics_state = disturbed_state
-	driver._rollback_space(CACHE_TEST_TICK)
+	driver._snapshot_space(SECOND_CACHE_TEST_TICK)
+	driver._rollback_space(FIRST_CACHE_TEST_TICK)
 
 	var restored_state := ball.physics_state
 	var position_error := (
@@ -116,4 +123,53 @@ func verify_cache_restore(driver: RapierDriver2D, ball: BouncingBall) -> bool:
 				position_error
 		)
 		return false
+
+	# Rewriting a tick must replace its old cache entry instead of creating a
+	# duplicate whose offset depends on cache insertion history.
+	var replacement_state := expected_state.duplicate(true)
+	replacement_state[NetworkRigidBody2D.ORIGIN] += Vector2(-19.0, 11.0)
+	ball.physics_state = replacement_state
+	driver._snapshot_space(SECOND_CACHE_TEST_TICK)
+	var cached_ticks := driver._state.ordered_cache_tags()
+	if cached_ticks.count(SECOND_CACHE_TEST_TICK) != 1:
+		push_error("RAPIER_COLLISION_REGRESSION: duplicate physics cache tick")
+		return false
+
+	ball.physics_state = disturbed_state
+	driver._rollback_space(SECOND_CACHE_TEST_TICK)
+	var replacement_error := (
+		(ball.physics_state[NetworkRigidBody2D.ORIGIN] as Vector2)
+		.distance_to(replacement_state[NetworkRigidBody2D.ORIGIN])
+	)
+	if replacement_error > 0.001:
+		push_error(
+			"RAPIER_COLLISION_REGRESSION: rewritten cache tick restored wrong state"
+		)
+		return false
+
+	ball.physics_state = expected_state
+	driver._physics_step(0.0)
+	return true
+
+func verify_step_then_flush(
+	driver: RapierDriver2D,
+	ball: BouncingBall,
+) -> bool:
+	# A flush before the step does not publish a direct-state transform to its
+	# Godot node. Keep the driver contract locked to step, then flush.
+	var original_state := ball.physics_state.duplicate(true)
+	var displaced_state := original_state.duplicate(true)
+	displaced_state[NetworkRigidBody2D.ORIGIN] += Vector2(23.0, -17.0)
+	ball.physics_state = displaced_state
+	driver._physics_step(0.0)
+
+	var expected_position := displaced_state[NetworkRigidBody2D.ORIGIN] as Vector2
+	if ball.global_position.distance_to(expected_position) > 0.001:
+		push_error(
+			"RAPIER_COLLISION_REGRESSION: step-then-flush did not publish node state"
+		)
+		return false
+
+	ball.physics_state = original_state
+	driver._physics_step(0.0)
 	return true

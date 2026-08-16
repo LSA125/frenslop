@@ -255,7 +255,8 @@ func _drive_scenario_input(tick: int) -> void:
 		_trace("JUMP_INJECTED tick=%d player=%s" % [tick, bottom_player.name])
 
 func _prime_world(tick: int) -> void:
-	platform.prepare(tick)
+	platform.restore_to_tick(tick)
+	platform.force_update_transform()
 	_place_stack()
 
 	for player in [bottom_player, top_player]:
@@ -318,8 +319,9 @@ func _sample_display_state(tick: int) -> void:
 	var horizontal_gap := top_player.global_position.x - bottom_player.global_position.x
 	top_player.force_update_transform()
 	bottom_player.force_update_transform()
-	top_player.ride_detector.force_shapecast_update()
-	var support := top_player.find_support_below()
+	var support := top_player.find_support_below([
+		host_player, client_player, platform
+	])
 	sample_count += 1
 	max_sag = maxf(max_sag, vertical_gap)
 	max_separation = maxf(max_separation, -vertical_gap)

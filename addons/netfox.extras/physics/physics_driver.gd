@@ -60,14 +60,22 @@ func after_tick_loop() -> void:
 			snapshots.erase(i)
 
 func step_physics(_delta: float, tick: int) -> void:
+	if physics_factor <= 0:
+		push_error("PhysicsDriver.physics_factor must be greater than zero")
+		return
+
 	# Break up physics into smaller steps if needed
 	var frac_delta = _delta / physics_factor
 	var rollback_participants = get_tree().get_nodes_in_group("network_rigid_body")
+	rollback_participants.sort_custom(_sort_nodes_by_path)
 	for i in range(physics_factor):
 		for net_rigid_body in rollback_participants:
 			net_rigid_body._physics_rollback_tick(frac_delta, tick)
 
 		_physics_step(frac_delta)
+
+func _sort_nodes_by_path(a: Node, b: Node) -> bool:
+	return String(a.get_path()) < String(b.get_path())
 
 ## Override this method to initialize the physics space.
 func _init_physics_space() -> void:
@@ -75,7 +83,7 @@ func _init_physics_space() -> void:
 
 ## Override this method to take one step in the physics space.
 ## [br][br]
-## It should also flush and update all Godot nodes
+## It should also flush and update all Godot nodes after the step.
 func _physics_step(_delta) -> void:
 	pass
 

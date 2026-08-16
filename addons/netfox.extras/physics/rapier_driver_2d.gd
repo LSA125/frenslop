@@ -21,6 +21,12 @@ func _physics_step(delta) -> void:
 
 
 func _snapshot_space(tick: int) -> void:
+	# Re-simulation rewrites ticks already present in the rolling cache. Replace
+	# the old entry so every tag remains unique and exact lookup stays valid.
+	var cache_index := _state.ordered_cache_tags().rfind(tick)
+	while cache_index >= 0:
+		_state.remove_cached_by_index(cache_index)
+		cache_index = _state.ordered_cache_tags().rfind(tick)
 	_state.cache_state(physics_space, tick)
 
 

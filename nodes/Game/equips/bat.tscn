@@ -120,10 +120,9 @@ size = Vector2(8, 30)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0uoen"]
 size = Vector2(28.5, 25)
 
-[node name="Bat" type="Node2D" unique_id=2140782126 node_paths=PackedStringArray("pick_up_collider", "floor_detector", "rollback_synchronizer")]
+[node name="Bat" type="Node2D" unique_id=2140782126 node_paths=PackedStringArray("pick_up_collider", "rollback_synchronizer")]
 script = ExtResource("1_3kwxk")
 pick_up_collider = NodePath("PickupArea/CollisionShape2D")
-floor_detector = NodePath("FloorCast")
 rollback_synchronizer = NodePath("RollbackSynchronizer")
 FALL_SPEED = 50
 
@@ -148,11 +147,6 @@ shape = SubResource("RectangleShape2D_deopo")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitArea" unique_id=1414669943]
 position = Vector2(8.75, -1.5)
 shape = SubResource("RectangleShape2D_0uoen")
-
-[node name="FloorCast" type="ShapeCast2D" parent="." unique_id=1160021394]
-enabled = false
-shape = SubResource("RectangleShape2D_deopo")
-target_position = Vector2(0, 0)
 
 [node name="TickInterpolator" type="Node" parent="." unique_id=1264043967 node_paths=PackedStringArray("root")]
 script = ExtResource("4_wydut")

@@ -14,8 +14,8 @@ class_name Player
 @export var input: PlayerInput
 @export var rollback_sync : RollbackSynchronizer
 @export var collision_shape : CollisionShape2D
-@export var ride_detector : ShapeCast2D
-@export var effects_detector : ShapeCast2D
+@export var ride_query_shape : Shape2D
+@export var effects_query_shape : Shape2D
 @export var animations : AnimatedSprite2D
 @export var internal_effects_holder : Node
 
@@ -39,9 +39,16 @@ var impulse_velocity := Vector2.ZERO
 var continuous_velocity := Vector2.ZERO
 var tick_velocity := Vector2.ZERO
 var emitted_velocity := Vector2.ZERO
+var carrier_velocity := Vector2.ZERO
 
 var rope_vel : Dictionary = {}
 var grounded := false
+
+const RIDE_QUERY_OFFSET := Vector2(0.0, 16.0)
+const RIDE_QUERY_MOTION := Vector2(0.0, 1.0)
+const EFFECTS_QUERY_OFFSET := Vector2(0.0, 4.5)
+const EFFECTS_QUERY_MASK := 7
+const MAX_QUERY_RESULTS := 32
 
 func _ready() -> void:
 	await get_tree().process_frame
@@ -55,10 +62,10 @@ func _rollback_tick(_delta: float, _tick: int, _is_fresh: bool) -> void:
 func _process(_delta: float) -> void:
 	apply_animations()
 
-func prepare_tick(delta: float) -> void:
+func prepare_tick(delta: float, support = null) -> void:
 	continuous_velocity = Vector2.ZERO
-	effects_detector.force_shapecast_update()
-	grounded = check_is_grounded()
+	carrier_velocity = Vector2.ZERO
+	grounded = check_is_grounded(support)
 	apply_equip()
 	apply_continuous_forces()
 	apply_impulse_forces()
@@ -81,11 +88,9 @@ func apply_continuous_forces() -> void:
 #also player just cause its easy, i probably should have named this external
 #and internal forces...
 func apply_impulse_forces() -> void:
-	if effects_detector.is_colliding():
-		for i in effects_detector.get_collision_count():
-			var collider := effects_detector.get_collider(i)
-			if collider.has_method("apply_velocity"):
-				impulse_velocity += collider.apply_velocity(self)
+	for collider in find_effect_colliders():
+		if collider.has_method("apply_velocity"):
+			impulse_velocity += collider.apply_velocity(self)
 
 func calc_input_movement(delta: float) -> void:
 	if not grounded:
@@ -108,81 +113,235 @@ func calc_input_movement(delta: float) -> void:
 
 	impulse_velocity = impulse_velocity.move_toward(Vector2.ZERO, KNOCKBACK_DECAY_SPEED*delta)
 
-func apply_ride_velocity() -> void:
-	var support: Node2D
-	for index in ride_detector.get_collision_count():
-		var collider := ride_detector.get_collider(index) as Node2D
-		if not (collider is Player or collider is MovingPlatform):
-			continue
-		if ride_detector.get_collision_normal(index).dot(Vector2.UP) <= COLLISION_NORMAL_TOLERANCE:
-			continue
-		if collider.global_position.y <= global_position.y:
-			continue
-		if support == null or collider.global_position.y < support.global_position.y or (
-			is_equal_approx(collider.global_position.y, support.global_position.y)
-			and String(collider.get_path()) < String(support.get_path())
-		):
-			support = collider
+func apply_ride_velocity(support) -> void:
 	if input.jump:
 		update_emitted_velocity(null)
 		return
-	if support != null and tick_velocity.y >= 0.0 and check_is_grounded():
-		tick_velocity.y -= velocity.y
-		velocity.y = 0.0
-		grounded = true
-	if support is Player:
-		tick_velocity += (support as Player).emitted_velocity
-	elif support is MovingPlatform:
-		tick_velocity += (support as MovingPlatform).get_tick_offset() / NetworkTime.ticktime
+	if support != null:
+		if tick_velocity.y >= 0.0 and check_is_grounded(support):
+			tick_velocity.y -= velocity.y
+			velocity.y = 0.0
+			grounded = true
+		carrier_velocity = support.get_carrier_velocity()
+		tick_velocity += carrier_velocity
 	update_emitted_velocity(support)
 
-func update_emitted_velocity(support: Node2D) -> void:
+func get_carrier_velocity() -> Vector2:
+	return emitted_velocity
+
+func get_carrier_motion_velocity() -> Vector2:
+	return carrier_velocity
+
+func get_ordered_velocity() -> Vector2:
+	return tick_velocity
+
+func update_emitted_velocity(support) -> void:
 	emitted_velocity = tick_velocity
-	var direction := signf(tick_velocity.x)
+	var relative_velocity_x := tick_velocity.x - carrier_velocity.x
+	var direction := signf(relative_velocity_x)
 	if is_zero_approx(direction):
 		return
 
-	effects_detector.target_position = Vector2(direction * CARRIER_BLOCK_CHECK_DISTANCE, 0.0)
-	effects_detector.force_shapecast_update()
-	var pushed_player := false
-	var blocked_by_other := false
-	for index in effects_detector.get_collision_count():
-		var collider := effects_detector.get_collider(index)
-		if collider == support or not (collider is PhysicsBody2D):
+	var blocker := find_horizontal_blocker(direction, support)
+	if blocker == null:
+		return
+	emitted_velocity.x = carrier_velocity.x
+	if blocker is Player and signf(input.movement) == direction:
+		var push_velocity := PUSH_FORCE * input.movement
+		emitted_velocity.x += direction * minf(absf(relative_velocity_x), absf(push_velocity))
+
+func find_effect_colliders() -> Array[Node]:
+	var colliders: Array[Node] = []
+	var seen := {}
+	var query := _make_shape_query(
+		effects_query_shape,
+		EFFECTS_QUERY_OFFSET,
+		EFFECTS_QUERY_MASK,
+		true
+	)
+	for result in get_world_2d().direct_space_state.intersect_shape(query, MAX_QUERY_RESULTS):
+		var collider := result.get("collider") as Node
+		if collider == null or seen.has(collider):
 			continue
-		if (
-			effects_detector.get_collision_normal(index).dot(Vector2(direction, 0.0))
-			>= -COLLISION_NORMAL_TOLERANCE
+		seen[collider] = true
+		colliders.append(collider)
+	colliders.sort_custom(_sort_node_path)
+	return colliders
+
+func find_push_contacts(direction: float, candidates: Array) -> Array[Player]:
+	var players: Array[Player] = []
+	var player_rectangle := collision_shape.shape as RectangleShape2D
+	var player_center := (_body_physics_transform(self) * collision_shape.transform).origin
+	player_center.x += direction * CARRIER_BLOCK_CHECK_DISTANCE
+	for other_player: Player in candidates:
+		if other_player == self:
+			continue
+		var other_rectangle := other_player.collision_shape.shape as RectangleShape2D
+		var other_transform := _body_physics_transform(other_player)
+		var other_center := (other_transform * other_player.collision_shape.transform).origin
+		var center_delta := other_center - player_center
+		var overlap := (player_rectangle.size + other_rectangle.size) * 0.5 - center_delta.abs()
+		if overlap.x <= 0.0 or overlap.y <= 0.0:
+			continue
+		if overlap.x <= overlap.y and signf(center_delta.x) == direction:
+			players.append(other_player)
+	return players
+
+func find_support_below(candidates: Array) -> Node2D:
+	var support: Node2D
+	var player_transform := _body_physics_transform(self)
+	var player_shape_transform := player_transform * collision_shape.transform
+	var player_rectangle := collision_shape.shape as RectangleShape2D
+	var query_transform := player_transform * Transform2D(
+		0.0, RIDE_QUERY_OFFSET + RIDE_QUERY_MOTION
+	)
+	var support_position := Vector2.ZERO
+	for candidate in candidates:
+		var candidate_shape := candidate.get(&"collision_shape") as CollisionShape2D
+		if candidate == self or candidate_shape == null or candidate_shape.shape == null:
+			continue
+		var candidate_transform := _body_physics_transform(candidate)
+		if candidate_transform.origin.y <= player_transform.origin.y:
+			continue
+		var candidate_rectangle := candidate_shape.shape as RectangleShape2D
+		if player_rectangle != null and candidate_rectangle != null:
+			var candidate_shape_transform := candidate_transform * candidate_shape.transform
+			var center_delta := candidate_shape_transform.origin - player_shape_transform.origin
+			var overlap := (
+				(player_rectangle.size + candidate_rectangle.size) * 0.5
+				- center_delta.abs()
+			)
+			if overlap.x <= 0.0 or overlap.y > overlap.x:
+				continue
+		if not ride_query_shape.collide(
+			query_transform,
+			candidate_shape.shape,
+			candidate_transform * candidate_shape.transform
 		):
 			continue
-		if collider is Player:
-			pushed_player = true
-		else:
-			blocked_by_other = true
-	effects_detector.target_position = Vector2.ZERO
+		if support == null or candidate_transform.origin.y < support_position.y or (
+			is_equal_approx(candidate_transform.origin.y, support_position.y)
+			and String(candidate.get_path()) < String(support.get_path())
+		):
+			support = candidate
+			support_position = candidate_transform.origin
+	return support
 
-	if not pushed_player and not blocked_by_other:
+func find_horizontal_blocker(direction: float, support = null) -> Node:
+	var parameters := PhysicsTestMotionParameters2D.new()
+	parameters.from = _body_physics_transform(self)
+	parameters.motion = Vector2(direction * CARRIER_BLOCK_CHECK_DISTANCE, 0.0)
+	parameters.margin = 0.0
+	parameters.recovery_as_collision = false
+	if support != null:
+		parameters.exclude_bodies = [support.get_rid()]
+	var result := PhysicsTestMotionResult2D.new()
+	if not PhysicsServer2D.body_test_motion(get_rid(), parameters, result):
+		return null
+	if result.get_collision_normal().dot(Vector2(direction, 0.0)) >= -COLLISION_NORMAL_TOLERANCE:
+		return null
+	return result.get_collider() as Node
+
+func _make_shape_query(
+	shape: Shape2D,
+	local_offset: Vector2,
+	collision_mask: int,
+	collide_with_areas: bool
+) -> PhysicsShapeQueryParameters2D:
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	var body_transform := PhysicsServer2D.body_get_state(
+		get_rid(), PhysicsServer2D.BODY_STATE_TRANSFORM
+	) as Transform2D
+	query.transform = body_transform * Transform2D(0.0, local_offset)
+	query.collision_mask = collision_mask
+	query.collide_with_bodies = true
+	query.collide_with_areas = collide_with_areas
+	query.exclude = [get_rid()]
+	return query
+
+func _body_physics_transform(body) -> Transform2D:
+	return PhysicsServer2D.body_get_state(
+		body.get_rid(), PhysicsServer2D.BODY_STATE_TRANSFORM
+	) as Transform2D
+
+func _sort_node_path(a: Node, b: Node) -> bool:
+	return String(a.get_path()) < String(b.get_path())
+
+func custom_move_x(
+	delta: float,
+	excluded_bodies: Array[RID] = [],
+	player_candidates: Array[Player] = []
+) -> void:
+	if is_zero_approx(tick_velocity.x):
 		return
-	emitted_velocity.x = 0.0
-	if pushed_player and not blocked_by_other and signf(input.movement) == direction:
-		var push_velocity := PUSH_FORCE * input.movement
-		emitted_velocity.x = direction * minf(absf(tick_velocity.x), absf(push_velocity))
-
-func custom_move_x(delta: float) -> void:
 	var motion := Vector2(tick_velocity.x * delta, 0.0)
-	var collision := move_and_collide(motion, false, safe_margin, true)
-	if (
-		collision
-		and motion.dot(collision.get_normal()) < 0.0
-		and absf(collision.get_normal().x) > COLLISION_NORMAL_TOLERANCE
-	):
+	if _move_horizontal(motion, excluded_bodies, player_candidates):
 		velocity.x = 0.0
 		tick_velocity.x = 0.0
 
+func custom_move_carrier_x(
+	delta: float,
+	excluded_bodies: Array[RID] = [],
+	player_candidates: Array[Player] = []
+) -> void:
+	if not is_zero_approx(carrier_velocity.x):
+		_move_horizontal(
+			Vector2(carrier_velocity.x * delta, 0.0),
+			excluded_bodies,
+			player_candidates
+		)
+
+func _move_horizontal(
+	motion: Vector2,
+	excluded_bodies: Array[RID],
+	player_candidates: Array[Player]
+) -> bool:
+	var world_exclusions := excluded_bodies.duplicate()
+	for candidate in player_candidates:
+		if candidate != self:
+			world_exclusions.append(candidate.get_rid())
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = collision_shape.shape
+	query.transform = _body_physics_transform(self) * collision_shape.transform
+	query.motion = motion
+	query.margin = 0.0
+	query.collision_mask = collision_mask
+	query.exclude = world_exclusions
+	var cast_result := get_world_2d().direct_space_state.cast_motion(query)
+	var safe_fraction := cast_result[0]
+	var player_rectangle := collision_shape.shape as RectangleShape2D
+	var player_center := query.transform.origin
+	var direction := signf(motion.x)
+	for candidate in player_candidates:
+		if candidate == self or excluded_bodies.has(candidate.get_rid()):
+			continue
+		var candidate_rectangle := candidate.collision_shape.shape as RectangleShape2D
+		var candidate_center := (
+			_body_physics_transform(candidate) * candidate.collision_shape.transform
+		).origin
+		var center_delta := candidate_center - player_center
+		var combined_half_size := (player_rectangle.size + candidate_rectangle.size) * 0.5
+		if absf(center_delta.y) >= combined_half_size.y:
+			continue
+		var forward_distance := center_delta.x * direction
+		if forward_distance <= 0.0:
+			continue
+		var horizontal_gap := forward_distance - combined_half_size.x
+		if horizontal_gap <= absf(motion.x):
+			safe_fraction = minf(
+				safe_fraction,
+				maxf(0.0, horizontal_gap) / absf(motion.x)
+			)
+	global_position += motion * safe_fraction
+	return safe_fraction < 1.0
+
 func custom_move_y(delta: float) -> void:
 	var motion := Vector2(0.0, tick_velocity.y * delta)
+	var original_x := global_position.x
 	var collision := move_and_collide(motion, false, safe_margin, true)
-	if not collision:
+	global_position.x = original_x
+	if collision == null:
 		return
 	var normal := collision.get_normal()
 	if normal.dot(Vector2.UP) > COLLISION_NORMAL_TOLERANCE:
@@ -191,38 +350,81 @@ func custom_move_y(delta: float) -> void:
 			velocity.y = 0.0
 			tick_velocity.y = 0.0
 	elif normal.dot(Vector2.DOWN) > COLLISION_NORMAL_TOLERANCE and tick_velocity.y < 0.0:
-		var collider := collision.get_collider() as Player
-		var collider_is_moving_up := collider != null and collider.tick_velocity.y < 0.0
+		var player_collider := collision.get_collider() as Player
+		var collider_is_moving_up := player_collider != null and player_collider.tick_velocity.y < 0.0
 		if not collider_is_moving_up:
 			velocity.y = 0.0
 			tick_velocity.y = 0.0
 
-func apply_ground_snap() -> void:
+func apply_ground_snap(support = null) -> void:
 	if input.jump or velocity.y < 0.0:
 		return
 	var snap_motion := Vector2.DOWN * GROUND_CHECK_DISTANCE
-	var collision := move_and_collide(snap_motion, true, safe_margin, false)
-	if (
-		collision == null
-		or collision.get_normal().dot(Vector2.UP) <= COLLISION_NORMAL_TOLERANCE
-	):
+	var floor_travel = _find_floor(snap_motion, support)
+	if floor_travel == null:
 		return
-	collision = move_and_collide(snap_motion, false, safe_margin, false)
-	if (
-		collision == null
-		or collision.get_normal().dot(Vector2.UP) <= COLLISION_NORMAL_TOLERANCE
-	):
-		return
+	global_position += floor_travel
 	grounded = true
 	velocity.y = 0.0
 	tick_velocity.y = 0.0
 
-func check_is_grounded() -> bool:
-	var collision := KinematicCollision2D.new()
-	return (
-		test_move(global_transform, Vector2.DOWN * GROUND_CHECK_DISTANCE, collision)
-		and collision.get_normal().dot(Vector2.UP) > COLLISION_NORMAL_TOLERANCE
+func check_is_grounded(support = null) -> bool:
+	return _find_floor(Vector2.DOWN * GROUND_CHECK_DISTANCE, support) != null
+
+func _find_floor(motion: Vector2, support = null):
+	if motion.is_zero_approx():
+		return null
+	var destination_transform := _body_physics_transform(self) * collision_shape.transform
+	destination_transform.origin += motion
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = collision_shape.shape
+	query.transform = destination_transform
+	query.collision_mask = collision_mask
+	query.exclude = [get_rid()]
+	if support != null:
+		query.exclude.append(support.get_rid())
+	var closest_travel := _support_floor_travel(motion, support)
+	var contacts := get_world_2d().direct_space_state.collide_shape(
+		query, MAX_QUERY_RESULTS
 	)
+	for contact_index in range(0, contacts.size(), 2):
+		var separation := contacts[contact_index + 1] - contacts[contact_index]
+		if (
+			not separation.is_zero_approx()
+			and separation.normalized().dot(Vector2.UP) > COLLISION_NORMAL_TOLERANCE
+		):
+			closest_travel = minf(
+				closest_travel,
+				maxf(0.0, motion.length() - separation.length())
+			)
+	if is_inf(closest_travel):
+		return null
+	return motion.normalized() * closest_travel
+
+func _support_floor_travel(motion: Vector2, support) -> float:
+	if support == null or motion.y <= 0.0:
+		return INF
+	var support_collision_shape := support.get(&"collision_shape") as CollisionShape2D
+	var player_rectangle := collision_shape.shape as RectangleShape2D
+	if support_collision_shape == null:
+		return INF
+	var support_rectangle := support_collision_shape.shape as RectangleShape2D
+	if player_rectangle == null or support_rectangle == null:
+		return INF
+	var player_transform := _body_physics_transform(self) * collision_shape.transform
+	var support_transform := _body_physics_transform(support) * support_collision_shape.transform
+	var combined_half_width := (player_rectangle.size.x + support_rectangle.size.x) * 0.5
+	if absf(player_transform.origin.x - support_transform.origin.x) >= combined_half_width:
+		return INF
+	var floor_gap := (
+		support_transform.origin.y
+		- support_rectangle.size.y * 0.5
+		- player_transform.origin.y
+		- player_rectangle.size.y * 0.5
+	)
+	if floor_gap > motion.y + safe_margin:
+		return INF
+	return maxf(0.0, floor_gap)
 
 func apply_animations() -> void:
 	face_direction(facing_right)
