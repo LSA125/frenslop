@@ -103,6 +103,10 @@ func _ready() -> void:
 	_verify_top_rider_jump(TEST_TICKS + 2)
 	if failures.is_empty():
 		_verify_platform_push(70)
+	if failures.is_empty():
+		_verify_platform_side_contact(70)
+	if failures.is_empty():
+		_verify_floor_recovery(70)
 	_finish_test()
 
 
@@ -374,6 +378,7 @@ func _verify_platform_push(tick: int) -> void:
 	_sync_physics_queries()
 
 	var previous_platform_position := platform.global_position
+	var previous_pusher_position := pusher.global_position
 	var previous_pushed_position := pushed.global_position
 	NetworkRollback._simulated_nodes.clear()
 	NetworkRollback._mutated_nodes.clear()
@@ -387,7 +392,17 @@ func _verify_platform_push(tick: int) -> void:
 			return
 	NetworkRollback.on_process_tick.emit(tick)
 	var platform_motion := platform.global_position - previous_platform_position
+	var pusher_motion := pusher.global_position - previous_pusher_position
 	var pushed_motion := pushed.global_position - previous_pushed_position
+	if (
+		absf(pusher_motion.y - platform_motion.y) > PUSH_TOLERANCE
+		or absf(pushed_motion.y - platform_motion.y) > PUSH_TOLERANCE
+	):
+		_fail(
+			"Player push added vertical motion: platform %s, pusher %s, pushed %s" %
+			[platform_motion, pusher_motion, pushed_motion]
+		)
+		return
 	var expected_pushed_motion_x := (
 		platform_motion.x + pusher.PUSH_FORCE * NetworkTime.ticktime
 	)
@@ -401,6 +416,70 @@ func _verify_platform_push(tick: int) -> void:
 	var horizontal_gap := pushed.global_position.x - pusher.global_position.x - player_width
 	if absf(horizontal_gap) > PUSH_TOLERANCE:
 		_fail("Moving-platform push left a %.4f px player gap" % horizontal_gap)
+
+
+func _verify_platform_side_contact(tick: int) -> void:
+	platform.restore_to_tick(tick)
+	platform.force_update_transform()
+	var player := players[0]
+	var other_player := players[1]
+	var player_rectangle := player.collision_shape.shape as RectangleShape2D
+	var platform_rectangle := platform.collision_shape.shape as RectangleShape2D
+	var combined_half_width := (player_rectangle.size.x + platform_rectangle.size.x) * 0.5
+	player.global_position = Vector2(
+		platform.global_position.x + combined_half_width + 2.0,
+		platform.global_position.y - player.collision_shape.position.y
+	)
+	other_player.global_position = Vector2.ZERO
+	_reset_player_motion()
+	player.tick_velocity.x = -120.0
+	player.force_update_transform()
+	other_player.force_update_transform()
+	_sync_physics_queries()
+	player.custom_move_x(NetworkTime.ticktime)
+	player.force_update_transform()
+	var horizontal_gap := (
+		player.collision_shape.global_position.x
+		- platform.collision_shape.global_position.x
+		- combined_half_width
+	)
+	if horizontal_gap < 0.0 or horizontal_gap > player.safe_margin + PUSH_TOLERANCE:
+		_fail("Horizontal sweep left an invalid platform gap: %.4f" % horizontal_gap)
+		return
+	var vertical_velocity := 30.0
+	player.tick_velocity.y = vertical_velocity
+	var start_position := player.global_position
+	player.custom_move_y(NetworkTime.ticktime)
+	var motion := player.global_position - start_position
+	var expected_motion := Vector2.DOWN * vertical_velocity * NetworkTime.ticktime
+	if motion.distance_to(expected_motion) > PUSH_TOLERANCE:
+		_fail("Platform side contact changed vertical motion: expected %s, got %s" % [
+			expected_motion, motion
+		])
+
+
+func _verify_floor_recovery(tick: int) -> void:
+	platform.restore_to_tick(tick)
+	platform.force_update_transform()
+	var player := players[0]
+	var other_player := players[1]
+	player.global_position = Vector2(
+		platform.global_position.x,
+		_shape_top(platform) - _shape_bottom_offset(player) + 1.0
+	)
+	other_player.global_position = Vector2.ZERO
+	_reset_player_motion()
+	player.force_update_transform()
+	other_player.force_update_transform()
+	_sync_physics_queries()
+	var start_y := player.global_position.y
+	player.custom_move_y(NetworkTime.ticktime)
+	var remaining_penetration := _shape_bottom(player) - _shape_top(platform)
+	if player.global_position.y >= start_y or remaining_penetration > PUSH_TOLERANCE:
+		_fail(
+			"Floor recovery failed: moved %.4f px with %.4f px penetration remaining" %
+			[player.global_position.y - start_y, remaining_penetration]
+		)
 
 
 func _shape_top(body: PhysicsBody2D) -> float:
@@ -436,7 +515,7 @@ func _finish_test() -> void:
 	if failures.is_empty():
 		print(
 			"ROLLBACK_RIDING_REGRESSION: PASS " +
-			"(diagonal stack, bottom movement, replay, rider jump, platform push)"
+			"(diagonal stack, replay, pushing, side contact, floor recovery)"
 		)
 		get_tree().quit()
 	else:

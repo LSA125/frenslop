@@ -653,6 +653,8 @@ func _capture_rollback_tick_start(tick: int) -> void:
 func _sample_rollback_ride_velocity_tick(tick: int) -> void:
 	if (
 		scenario == SCENARIO_BOTTOM_WALK
+		and tick >= begin_tick
+		and tick < end_tick
 		and rollback_start_tick == tick
 		and is_instance_valid(bottom_player)
 		and is_instance_valid(top_player)

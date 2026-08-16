@@ -301,18 +301,28 @@ func _move_horizontal(
 	for candidate in player_candidates:
 		if candidate != self:
 			world_exclusions.append(candidate.get_rid())
-	var query := PhysicsShapeQueryParameters2D.new()
-	query.shape = collision_shape.shape
-	query.transform = _body_physics_transform(self) * collision_shape.transform
-	query.motion = motion
-	query.margin = 0.0
-	query.collision_mask = collision_mask
-	query.exclude = world_exclusions
-	var cast_result := get_world_2d().direct_space_state.cast_motion(query)
-	var safe_fraction := cast_result[0]
-	var player_rectangle := collision_shape.shape as RectangleShape2D
-	var player_center := query.transform.origin
+	var parameters := PhysicsTestMotionParameters2D.new()
+	parameters.from = _body_physics_transform(self)
+	parameters.motion = motion
+	parameters.margin = 0.0
+	parameters.recovery_as_collision = false
+	parameters.exclude_bodies = world_exclusions
+	var result := PhysicsTestMotionResult2D.new()
+	var collided := PhysicsServer2D.body_test_motion(get_rid(), parameters, result)
+	var safe_fraction := 1.0
 	var direction := signf(motion.x)
+	if (
+		collided
+		and result.get_collision_normal().dot(Vector2(direction, 0.0))
+		< -COLLISION_NORMAL_TOLERANCE
+	):
+		safe_fraction = clampf(
+			(absf(result.get_travel().x) - safe_margin) / absf(motion.x),
+			0.0,
+			1.0
+		)
+	var player_rectangle := collision_shape.shape as RectangleShape2D
+	var player_center := (_body_physics_transform(self) * collision_shape.transform).origin
 	for candidate in player_candidates:
 		if candidate == self or excluded_bodies.has(candidate.get_rid()):
 			continue
@@ -331,16 +341,14 @@ func _move_horizontal(
 		if horizontal_gap <= absf(motion.x):
 			safe_fraction = minf(
 				safe_fraction,
-				maxf(0.0, horizontal_gap) / absf(motion.x)
+				maxf(0.0, horizontal_gap - safe_margin) / absf(motion.x)
 			)
 	global_position += motion * safe_fraction
 	return safe_fraction < 1.0
 
 func custom_move_y(delta: float) -> void:
 	var motion := Vector2(0.0, tick_velocity.y * delta)
-	var original_x := global_position.x
 	var collision := move_and_collide(motion, false, safe_margin, true)
-	global_position.x = original_x
 	if collision == null:
 		return
 	var normal := collision.get_normal()
@@ -355,6 +363,7 @@ func custom_move_y(delta: float) -> void:
 		if not collider_is_moving_up:
 			velocity.y = 0.0
 			tick_velocity.y = 0.0
+
 
 func apply_ground_snap(support = null) -> void:
 	if input.jump or velocity.y < 0.0:
@@ -424,7 +433,7 @@ func _support_floor_travel(motion: Vector2, support) -> float:
 	)
 	if floor_gap > motion.y + safe_margin:
 		return INF
-	return maxf(0.0, floor_gap)
+	return floor_gap - safe_margin
 
 func apply_animations() -> void:
 	face_direction(facing_right)
