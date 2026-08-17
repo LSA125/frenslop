@@ -264,7 +264,8 @@ func _prime_world(tick: int) -> void:
 		player.impulse_velocity = Vector2.ZERO
 		player.input.movement = 0.0
 		player.input.jump = false
-		player.input.action = false
+		player.input.action_held = false
+		player.input.equip_held = false
 		player.prepare(tick)
 		player.force_update_transform()
 

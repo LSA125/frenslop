@@ -23,6 +23,8 @@ The deterministic layer currently includes:
   motion, replay, and jumping; and
 - a carrier-velocity scene covering the two-pixel blocked-carrier emission
   rule and player push speed while the carrier is also touching the floor; and
+- an equip/combat scene covering punch cooldown, held input, deterministic
+  pickup contention and dropping, and minimum/maximum bat charge; and
 - Rapier floor contact and cache restoration under manual rollback stepping.
 
 The riding scene still calls the removed positional/dependency riding API and

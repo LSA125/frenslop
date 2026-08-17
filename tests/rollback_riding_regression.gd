@@ -151,7 +151,8 @@ func _reset_player_motion() -> void:
 		player.carrier_velocity = Vector2.ZERO
 		player.input.movement = 0.0
 		player.input.jump = false
-		player.input.action = false
+		player.input.action_held = false
+		player.input.equip_held = false
 
 
 func _restore_tick(tick: int, state: Array[Dictionary]) -> void:
@@ -170,7 +171,8 @@ func _restore_tick(tick: int, state: Array[Dictionary]) -> void:
 		player.grounded = false
 		player.input.movement = 0.0
 		player.input.jump = false
-		player.input.action = false
+		player.input.action_held = false
+		player.input.equip_held = false
 		player.force_update_transform()
 	_sync_physics_queries()
 

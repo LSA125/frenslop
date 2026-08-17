@@ -3,7 +3,7 @@ extends Equip
 @export var collision_shape : CollisionShape2D
 @export var force : float = 500
 func equip_tick(delta : float, input : PlayerInput) -> void:
-	if input.action:
+	if input.action_held:
 		collision_shape.disabled = false
 	else:
 		collision_shape.disabled = true

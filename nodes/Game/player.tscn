@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bwpilqapbafwf" path="res://scripts/game/Player.gd" id="1_c6bbt"]
 [ext_resource type="Script" uid="uid://d350u8evihs1u" path="res://addons/netfox/rollback/rollback-synchronizer.gd" id="2_3n60s"]
 [ext_resource type="Script" uid="uid://xycjudc2mlmd" path="res://nodes/game/PlayerInput.gd" id="2_hs7lg"]
+[ext_resource type="Script" uid="uid://dblk14s1mwavg" path="res://scripts/game/effects/EffectReceiver2D.gd" id="4_effect_receiver"]
 [ext_resource type="SpriteFrames" uid="uid://6ugma7wj5m3y" path="res://assets/shared/MaskDudeSpiteFrames.tres" id="5_afa2h"]
 [ext_resource type="Script" uid="uid://dour8fehaaugp" path="res://addons/netfox/tick-interpolator.gd" id="6_afa2h"]
 [ext_resource type="Shape2D" uid="uid://dlua18bl7y8gu" path="res://assets/shared/PlayerBodyShape.tres" id="6_uj5xo"]
@@ -13,7 +14,13 @@ size = Vector2(17, 5)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8dwan"]
 size = Vector2(20, 23)
 
-[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "animations", "internal_effects_holder")]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_punch"]
+size = Vector2(24, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pickup"]
+size = Vector2(56, 36)
+
+[node name="Player" type="CharacterBody2D" unique_id=60343476 node_paths=PackedStringArray("input", "rollback_sync", "collision_shape", "effect_receiver", "animations", "internal_effects_holder")]
 collision_layer = 2
 collision_mask = 3
 floor_snap_length = 6.0
@@ -27,6 +34,9 @@ rollback_sync = NodePath("RollbackSynchronizer")
 collision_shape = NodePath("CollisionShape2D")
 ride_query_shape = SubResource("RectangleShape2D_3n60s")
 effects_query_shape = SubResource("RectangleShape2D_8dwan")
+punch_query_shape = SubResource("RectangleShape2D_punch")
+pickup_query_shape = SubResource("RectangleShape2D_pickup")
+effect_receiver = NodePath("EffectReceiver")
 animations = NodePath("AnimatedSprite2D")
 internal_effects_holder = NodePath("InternalEffects")
 metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
@@ -35,9 +45,9 @@ metadata/_custom_type_script = "uid://c5qpdmvd63ugb"
 script = ExtResource("2_3n60s")
 root = NodePath("..")
 enable_prediction = true
-state_properties = Array[String]([":position", ":facing_right", ":velocity", ":impulse_velocity"])
+state_properties = Array[String]([":position", ":facing_right", ":velocity", ":impulse_velocity", ":action_hold_ticks", ":equip_was_held", ":remaining_cooldown_ticks"])
 full_state_interval = 1
-input_properties = Array[String](["Input:movement", "Input:jump", "Input:action"])
+input_properties = Array[String](["Input:movement", "Input:jump", "Input:action_held", "Input:equip_held"])
 metadata/_custom_type_script = "uid://d350u8evihs1u"
 
 [node name="Input" type="Node" parent="." unique_id=258905339]
@@ -45,10 +55,18 @@ script = ExtResource("2_hs7lg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=791727306]
 sprite_frames = ExtResource("5_afa2h")
-animation = &"idle"
-frame_progress = 0.13647054
+animation = &"hit"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=99890407]
+position = Vector2(0, 4)
+shape = ExtResource("6_uj5xo")
+
+[node name="EffectReceiver" type="Area2D" parent="." unique_id=1405144904]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("4_effect_receiver")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EffectReceiver" unique_id=1343291517]
 position = Vector2(0, 4)
 shape = ExtResource("6_uj5xo")
 

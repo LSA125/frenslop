@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory = $true)][string]$GodotBinary,
     [Parameter(Mandatory = $true)][string]$ProjectPath,
     [Parameter(Mandatory = $true)]
-    [ValidateSet('riding', 'rapier_manual', 'carrier_velocity')]
+    [ValidateSet('riding', 'rapier_manual', 'carrier_velocity', 'equip_combat')]
     [string]$Regression,
     [Parameter(Mandatory = $true)][string]$OutputPath,
     [Parameter(Mandatory = $true)][string]$PidPath
@@ -24,6 +24,7 @@ $scenePath = switch ($Regression) {
     'riding' { 'res://tests/rollback_riding_regression.tscn' }
     'rapier_manual' { 'res://tests/rapier_collision_regression.tscn' }
     'carrier_velocity' { 'res://tests/carrier_velocity_regression.tscn' }
+    'equip_combat' { 'res://tests/equip_combat_regression.tscn' }
 }
 
 $arguments = @(

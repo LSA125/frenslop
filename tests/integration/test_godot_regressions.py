@@ -123,11 +123,13 @@ def _run_posix_regression(
     regression: str,
     output_path: Path,
 ) -> int:
-    scene = (
-        "res://tests/rollback_riding_regression.tscn"
-        if regression == "riding"
-        else "res://tests/rapier_collision_regression.tscn"
-    )
+    scenes = {
+        "riding": "res://tests/rollback_riding_regression.tscn",
+        "rapier_manual": "res://tests/rapier_collision_regression.tscn",
+        "carrier_velocity": "res://tests/carrier_velocity_regression.tscn",
+        "equip_combat": "res://tests/equip_combat_regression.tscn",
+    }
+    scene = scenes[regression]
     command = [
         str(godot_binary),
         "--headless",
@@ -159,6 +161,7 @@ def _run_posix_regression(
         ("riding", "ROLLBACK_RIDING_REGRESSION: PASS"),
         ("rapier_manual", "RAPIER_COLLISION_REGRESSION: PASS (manual driver"),
         ("carrier_velocity", "CARRIER_VELOCITY_REGRESSION: PASS"),
+        ("equip_combat", "EQUIP_COMBAT_REGRESSION: PASS"),
     ],
 )
 def test_godot_regression(
